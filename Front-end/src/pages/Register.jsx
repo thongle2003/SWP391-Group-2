@@ -11,7 +11,7 @@ function Register() {
   return (
     <div className="register-page">
       {/* Website branding */}
-      <div className="website-branding">EVMARKETPLAY.VN</div>
+      <div className="website-branding" onClick={() => navigate('/')}>EVMARKETPLAY.VN</div>
       
       <div className="container-fluid h-100">
         <div className="row h-100">
