@@ -1,21 +1,22 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import './Login.css'
+import './Register.css'
 
-function Login() {
+function Register() {
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const navigate = useNavigate()
 
   return (
-    <div className="login-page">
+    <div className="register-page">
       {/* Website branding */}
       <div className="website-branding" onClick={() => navigate('/')}>EVMARKETPLAY.VN</div>
       
       <div className="container-fluid h-100">
         <div className="row h-100">
           <div className="col-12 d-flex align-items-center justify-content-center">
-            <div className="login-card">
+            <div className="register-card">
               {/* Language Selector */}
               <div className="language-selector">
                 <span>Tiếng Việt (VIE)</span>
@@ -24,12 +25,12 @@ function Login() {
                 </svg>
               </div>
 
-              {/* Login Content */}
-              <div className="login-content">
-                <h1 className="login-title">Đăng Nhập</h1>
+              {/* Register Content */}
+              <div className="register-content">
+                <h1 className="register-title">Đăng ký</h1>
                 
-                <form className="login-form">
-                  <div className="mb-4">
+                <form className="register-form">
+                  <div className="mb-3">
                     <label className="form-label">Tên tài khoản</label>
                     <input 
                       type="text" 
@@ -38,7 +39,16 @@ function Login() {
                     />
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-3">
+                    <label className="form-label">Email</label>
+                    <input 
+                      type="email" 
+                      className="form-control custom-input" 
+                      placeholder=""
+                    />
+                  </div>
+
+                  <div className="mb-3">
                     <label className="form-label">MẬT KHẨU</label>
                     <div className="password-input">
                       <input 
@@ -65,8 +75,42 @@ function Login() {
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary login-button w-100">
-                    Đăng Nhập
+                  <div className="mb-3">
+                    <label className="form-label">XÁC NHẬN MẬT KHẨU</label>
+                    <div className="password-input">
+                      <input 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        className="form-control custom-input" 
+                        placeholder=""
+                      />
+                      <button 
+                        type="button" 
+                        className="password-toggle"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          {showConfirmPassword ? (
+                            <>
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2"/>
+                              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                            </>
+                          ) : (
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2"/>
+                          )}
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-check mb-3">
+                    <input className="form-check-input" type="checkbox" id="termsCheck" />
+                    <label className="form-check-label terms-label" htmlFor="termsCheck">
+                      I have read and agreed to the Terms of Service and Privacy Policy
+                    </label>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary register-button w-100">
+                    TẠO TÀI KHOẢN
                   </button>
                 </form>
 
@@ -94,7 +138,7 @@ function Login() {
                 </div>
 
                 <div className="signup-link text-center mt-4">
-                  Chưa có tài khoản ? <a href="#" className="signup-text" onClick={(e) => { e.preventDefault(); navigate('/register'); }}>Đăng ký</a>
+                  Đã có tài khoản ? <a href="#" className="signup-text" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Đăng nhập</a>
                 </div>
               </div>
             </div>
@@ -105,4 +149,4 @@ function Login() {
   )
 }
 
-export default Login
+export default Register
