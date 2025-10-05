@@ -1,5 +1,5 @@
-/* Custom Login Styles with Bootstrap */
-.login-page {
+/* Custom Register Styles with Bootstrap */
+.register-page {
   width: 100vw;
   height: 100vh;
   background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
@@ -16,6 +16,7 @@
   position: fixed;
   top: 0;
   left: 0;
+  overflow-y: auto;
 }
 
 .website-branding {
@@ -33,7 +34,7 @@
   text-transform: uppercase;
 }
 
-.login-card {
+.register-card {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.15);
@@ -57,22 +58,22 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  z-index: 10;
+  z-index: 5;
 }
 
 .language-selector svg {
   color: #999;
 }
 
-.login-content {
-  padding: 40px 35px 35px;
+.register-content {
+  padding: 30px 35px 30px;
 }
 
-.login-title {
-  font-size: 28px;
+.register-title {
+  font-size: 26px;
   font-weight: 800;
   color: #000;
-  margin: 0 0 30px 0;
+  margin: 0 0 20px 0;
   text-align: center;
   letter-spacing: -0.5px;
 }
@@ -90,11 +91,11 @@
   border-bottom: 2px solid #e0e0e0 !important;
   border-radius: 0 !important;
   background: transparent !important;
-  font-size: 16px;
+  font-size: 15px;
   color: #333;
-  padding: 12px 4px;
+  padding: 10px 4px;
   box-shadow: none !important;
-  height: 48px;
+  height: 42px;
 }
 
 .custom-input:focus {
@@ -126,24 +127,36 @@
   color: #333;
 }
 
-.login-button {
-  height: 48px;
+.terms-label {
+  font-size: 12px;
+  color: #666;
+  margin-left: 8px;
+  line-height: 1.3;
+}
+
+.form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.register-button {
+  height: 44px;
   background: #007bff !important;
   border: none !important;
   border-radius: 8px !important;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  margin-top: 20px;
+  margin-top: 15px;
   letter-spacing: 0.5px;
 }
 
-.login-button:hover {
+.register-button:hover {
   background: #0056b3 !important;
 }
 
 .divider {
   text-align: center;
-  margin: 30px 0;
+  margin: 20px 0;
   position: relative;
 }
 
@@ -168,20 +181,20 @@
 .social-login {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .social-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  height: 48px;
+  gap: 10px;
+  height: 42px;
   border: 2px solid #e0e0e0 !important;
   background: white !important;
   border-radius: 8px !important;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #333 !important;
   transition: all 0.3s ease;
@@ -228,25 +241,25 @@
     white-space: nowrap;
   }
   
-  .login-card {
+  .register-card {
     max-width: 420px;
     top: 40px;
     right: 50px;
   }
   
-  .login-content {
-    padding: 50px 45px 45px;
+  .register-content {
+    padding: 35px 45px 35px;
   }
   
-  .login-title {
-    font-size: 32px;
-    margin-bottom: 40px;
+  .register-title {
+    font-size: 28px;
+    margin-bottom: 25px;
   }
 }
 
 /* Tablet */
 @media (max-width: 768px) {
-  .login-page {
+  .register-page {
     padding: 20px;
     justify-content: center;
   }
@@ -259,18 +272,18 @@
     white-space: nowrap;
   }
   
-  .login-card {
+  .register-card {
     max-width: 450px;
     top: 25px;
     right: 25px;
     position: absolute;
   }
   
-  .login-content {
+  .register-content {
     padding: 50px 40px 40px;
   }
   
-  .login-title {
+  .register-title {
     font-size: 32px;
     margin-bottom: 40px;
   }
@@ -278,7 +291,7 @@
 
 /* Mobile */
 @media (max-width: 480px) {
-  .login-page {
+  .register-page {
     padding: 15px;
     justify-content: center;
   }
@@ -291,18 +304,18 @@
     white-space: nowrap;
   }
   
-  .login-card {
+  .register-card {
     max-width: 100%;
     top: 20px;
     right: 20px;
     position: absolute;
   }
   
-  .login-content {
+  .register-content {
     padding: 40px 30px 30px;
   }
   
-  .login-title {
+  .register-title {
     font-size: 28px;
     margin-bottom: 30px;
   }
