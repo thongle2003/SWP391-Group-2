@@ -57,11 +57,14 @@ public class UserService {
             user.setUsername(registerRequestDTO.getUsername());
             user.setEmail(registerRequestDTO.getEmail());
             user.setPassword(registerRequestDTO.getPassword());
-            user.setStatus(registerRequestDTO.getStatus());
+            user.setStatus("Active");
             user.setCreatedAt(new java.util.Date());
-            // Lấy role từ roleID
-            com.evtrading.swp391.entity.Role role = roleRepository.findById(registerRequestDTO.getRoleID()).orElse(null);
-            if (role == null) return null;
+            // Role mặc định là "Member"
+            com.evtrading.swp391.entity.Role role = roleRepository.findByRoleName("Member");
+            if (role == null) {
+                // Or throw an exception, depending on how you want to handle this case
+                return null;
+            }
             user.setRole(role);
             return userRepository.save(user);
         }
