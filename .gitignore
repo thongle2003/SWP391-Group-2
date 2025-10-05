@@ -53,3 +53,5 @@ Thumbs.db
 
 # Spring Boot
 *.pid
+
+BE/swp391/src/main/resources/application.properties
