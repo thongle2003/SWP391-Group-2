@@ -5,6 +5,8 @@ import './Header.css'
 function Header() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
+  const [isLoggedIn, setIsLoggedIn] = useState(false) // For demo purposes
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -45,11 +47,49 @@ function Header() {
 
           {/* Auth Buttons - Right */}
           <div className="auth-buttons">
-            <button className="btn-login" onClick={() => navigate('/login')}>
-              Đăng nhập
-            </button>
-            <button className="btn-register" onClick={() => navigate('/register')}>
-              Đăng ký
+            {!isLoggedIn ? (
+              <>
+                <button className="btn-login" onClick={() => navigate('/login')}>
+                  Đăng nhập
+                </button>
+                <button className="btn-register" onClick={() => navigate('/register')}>
+                  Đăng ký
+                </button>
+              </>
+            ) : (
+              <div className="user-menu-container">
+                <button 
+                  className="user-avatar-btn" 
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                >
+                  <img src="https://via.placeholder.com/40" alt="User" />
+                </button>
+                {showUserMenu && (
+                  <div className="user-dropdown">
+                    <div className="dropdown-item" onClick={() => { navigate('/profile'); setShowUserMenu(false); }}>
+                      <span>👤</span> Thông tin cá nhân
+                    </div>
+                    <div className="dropdown-item" onClick={() => { navigate('/my-orders'); setShowUserMenu(false); }}>
+                      <span>📦</span> Đơn hàng của tôi
+                    </div>
+                    <div className="dropdown-item" onClick={() => { navigate('/settings'); setShowUserMenu(false); }}>
+                      <span>⚙️</span> Cài đặt
+                    </div>
+                    <div className="dropdown-divider"></div>
+                    <div className="dropdown-item" onClick={() => { setIsLoggedIn(false); setShowUserMenu(false); }}>
+                      <span>🚪</span> Đăng xuất
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Toggle demo login state */}
+            <button 
+              className="btn-demo-toggle" 
+              onClick={() => setIsLoggedIn(!isLoggedIn)}
+              style={{ marginLeft: '10px', fontSize: '12px', padding: '5px 10px' }}
+            >
+              {isLoggedIn ? '👤 Thành viên' : '👤 Thành viên'}
             </button>
           </div>
         </div>

@@ -13,8 +13,8 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-        @Autowired
-        private com.evtrading.swp391.repository.RoleRepository roleRepository;
+    @Autowired
+    private com.evtrading.swp391.repository.RoleRepository roleRepository;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -48,24 +48,25 @@ public class UserService {
                 .filter(user -> user.getPassword().equals(password));
     }
 
-        public User register(com.evtrading.swp391.dto.RegisterRequestDTO registerRequestDTO) {
-            if (userRepository.findByUsername(registerRequestDTO.getUsername()).isPresent() ||
+    public User register(com.evtrading.swp391.dto.RegisterRequestDTO registerRequestDTO) {
+        if (userRepository.findByUsername(registerRequestDTO.getUsername()).isPresent() ||
                 userRepository.findByEmail(registerRequestDTO.getEmail()).isPresent()) {
-                return null; // Username hoặc email đã tồn tại
-            }
-            User user = new User();
-            user.setUsername(registerRequestDTO.getUsername());
-            user.setEmail(registerRequestDTO.getEmail());
-            user.setPassword(registerRequestDTO.getPassword());
-            user.setStatus("Active");
-            user.setCreatedAt(new java.util.Date());
-            // Role mặc định là "Member"
-            com.evtrading.swp391.entity.Role role = roleRepository.findByRoleName("Member");
-            if (role == null) {
-                // Or throw an exception, depending on how you want to handle this case
-                return null;
-            }
-            user.setRole(role);
-            return userRepository.save(user);
+            return null; // Username hoặc email đã tồn tại
         }
+        User user = new User();
+        user.setUsername(registerRequestDTO.getUsername());
+        user.setEmail(registerRequestDTO.getEmail());
+        user.setPassword(registerRequestDTO.getPassword());
+        // New users must be approved by an admin before they become active
+        user.setStatus("Pending");
+        user.setCreatedAt(new java.util.Date());
+        // Role mặc định là "Member"
+        com.evtrading.swp391.entity.Role role = roleRepository.findByRoleName("Member");
+        if (role == null) {
+            // Or throw an exception, depending on how you want to handle this case
+            return null;
+        }
+        user.setRole(role);
+        return userRepository.save(user);
+    }
 }
