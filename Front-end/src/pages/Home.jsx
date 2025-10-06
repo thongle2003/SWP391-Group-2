@@ -1,8 +1,8 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import Header from '../components/Header'
 import Footer from '../components/Footer'
+import Header from '../components/Header'
 import './Home.css'
 
 function Home() {
