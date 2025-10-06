@@ -57,7 +57,8 @@ public class UserService {
             user.setUsername(registerRequestDTO.getUsername());
             user.setEmail(registerRequestDTO.getEmail());
             user.setPassword(registerRequestDTO.getPassword());
-            user.setStatus("Active");
+            // New users must be approved by an admin before they become active
+            user.setStatus("Pending");
             user.setCreatedAt(new java.util.Date());
             // Role mặc định là "Member"
             com.evtrading.swp391.entity.Role role = roleRepository.findByRoleName("Member");
