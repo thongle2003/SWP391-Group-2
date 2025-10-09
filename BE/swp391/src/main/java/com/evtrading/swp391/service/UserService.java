@@ -4,6 +4,7 @@ import com.evtrading.swp391.entity.User;
 import com.evtrading.swp391.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,12 @@ public class UserService {
 
     @Autowired
     private com.evtrading.swp391.repository.RoleRepository roleRepository;
+
+    /*
+    // Bỏ comment dòng này khi bạn muốn dùng BCrypt
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    */
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -43,11 +50,6 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public Optional<User> login(String username, String password) {
-        return userRepository.findByUsername(username)
-                .filter(user -> user.getPassword().equals(password));
-    }
-
     public User register(com.evtrading.swp391.dto.RegisterRequestDTO registerRequestDTO) {
         if (userRepository.findByUsername(registerRequestDTO.getUsername()).isPresent() ||
                 userRepository.findByEmail(registerRequestDTO.getEmail()).isPresent()) {
@@ -56,7 +58,15 @@ public class UserService {
         User user = new User();
         user.setUsername(registerRequestDTO.getUsername());
         user.setEmail(registerRequestDTO.getEmail());
+
+        // Tạm thời vẫn dùng plaintext
         user.setPassword(registerRequestDTO.getPassword());
+
+        /*
+        // Khi sẵn sàng, hãy dùng code này thay cho dòng trên
+        user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword()));
+        */
+        
         // New users must be approved by an admin before they become active
         user.setStatus("Pending");
         user.setCreatedAt(new java.util.Date());
