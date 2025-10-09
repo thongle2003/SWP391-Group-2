@@ -4,6 +4,7 @@ import com.evtrading.swp391.dto.AuthResponseDTO;
 import com.evtrading.swp391.dto.LoginRequestDTO;
 import com.evtrading.swp391.dto.RegisterRequestDTO;
 import com.evtrading.swp391.entity.User;
+import com.evtrading.swp391.repository.UserRepository;
 import com.evtrading.swp391.security.JwtUtils;
 import com.evtrading.swp391.service.UserService;
 
@@ -16,7 +17,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 
 /**
  * Controller xử lý các yêu cầu xác thực như đăng nhập và đăng ký
@@ -44,6 +47,9 @@ public class AuthController {
      */
     @Autowired
     JwtUtils jwtUtils;
+
+    @Autowired
+    UserRepository userRepository;
 
     /**
      * API đăng nhập: Xác thực người dùng và trả về JWT token
@@ -80,7 +86,21 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtils.generateJwtToken(authentication);
             
-            return ResponseEntity.ok(new AuthResponseDTO(jwt));
+            // Lấy thông tin chi tiết của người dùng
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            User user = userRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found after authentication"));
+
+            // Tạo response chứa token, thông tin người dùng và tokenType
+            AuthResponseDTO response = new AuthResponseDTO(
+                    jwt,
+                    user.getUserID(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().getRoleName()
+            );
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             // Log chi tiết lỗi để debug
             System.err.println("Authentication error: " + e.getClass().getName());
