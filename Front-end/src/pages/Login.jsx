@@ -1,14 +1,52 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import backgroundVideo from '../assets/33vfxVliVS7mnZQ8o2LDBHzOqvL.mp4'
+import api from '../services/api'
 import './Login.css'
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await api.post('/users/login', {
+        username,
+        password
+      })
+
+      // Lưu thông tin user vào localStorage
+      if (response.data) {
+        localStorage.setItem('user', JSON.stringify(response.data))
+        localStorage.setItem('isLoggedIn', 'true')
+        
+        // Chuyển về trang chủ
+        navigate('/')
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="login-page">
+      {/* Video Background */}
+      <video autoPlay loop muted playsInline className="background-video">
+        <source src={backgroundVideo} type="video/mp4" />
+      </video>
+      
       {/* Website branding */}
       <div className="website-branding" onClick={() => navigate('/')}>EVMARKETPLAY.VN</div>
       
@@ -28,13 +66,23 @@ function Login() {
               <div className="login-content">
                 <h1 className="login-title">Đăng Nhập</h1>
                 
-                <form className="login-form">
+                {error && (
+                  <div className="alert alert-danger" role="alert">
+                    {error}
+                  </div>
+                )}
+                
+                <form className="login-form" onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <label className="form-label">Tên tài khoản</label>
                     <input 
                       type="text" 
                       className="form-control custom-input" 
                       placeholder=""
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      disabled={loading}
+                      required
                     />
                   </div>
 
@@ -45,11 +93,16 @@ function Login() {
                         type={showPassword ? "text" : "password"} 
                         className="form-control custom-input" 
                         placeholder=""
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        required
                       />
                       <button 
                         type="button" 
                         className="password-toggle"
                         onClick={() => setShowPassword(!showPassword)}
+                        disabled={loading}
                       >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                           {showPassword ? (
@@ -65,8 +118,8 @@ function Login() {
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary login-button w-100">
-                    Đăng Nhập
+                  <button type="submit" className="btn btn-primary login-button w-100" disabled={loading}>
+                    {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
                   </button>
                 </form>
 

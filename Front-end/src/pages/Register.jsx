@@ -1,6 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import backgroundVideo from '../assets/33vfxVliVS7mnZQ8o2LDBHzOqvL.mp4'
 import './Register.css'
 
 function Register() {
@@ -10,6 +11,11 @@ function Register() {
 
   return (
     <div className="register-page">
+      {/* Video Background */}
+      <video autoPlay loop muted playsInline className="background-video">
+        <source src={backgroundVideo} type="video/mp4" />
+      </video>
+      
       {/* Website branding */}
       <div className="website-branding" onClick={() => navigate('/')}>EVMARKETPLAY.VN</div>
       
