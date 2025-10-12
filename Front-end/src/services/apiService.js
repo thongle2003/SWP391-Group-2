@@ -21,20 +21,29 @@ const apiService = {
   },
 
   register: async (userData) => {
-    const response = await fetch(`${API_BASE_URL}/users/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(errorData || 'Registration failed');
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Registration failed');
+      }
+
+      // Parse response
+      const data = await response.text();
+      
+      // Backend trả về text "User registered successfully!"
+      return { success: true, message: data };
+    } catch (error) {
+      console.error('Register API Error:', error);
+      throw error;
     }
-
-    return response.json();
   },
 
   // User profile endpoints
