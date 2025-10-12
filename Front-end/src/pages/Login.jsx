@@ -1,14 +1,16 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Login.css'
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <div className="login-page">
       {/* Website branding */}
-      <div className="website-branding">EVMARKETPLAY.VN</div>
+      <div className="website-branding" onClick={() => navigate('/')}>EVMARKETPLAY.VN</div>
       
       <div className="container-fluid h-100">
         <div className="row h-100">
@@ -92,7 +94,7 @@ function Login() {
                 </div>
 
                 <div className="signup-link text-center mt-4">
-                  Chưa có tài khoản ? <a href="#" className="signup-text">Đăng ký</a>
+                  Chưa có tài khoản ? <a href="#" className="signup-text" onClick={(e) => { e.preventDefault(); navigate('/register'); }}>Đăng ký</a>
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@
 .login-page {
   width: 100vw;
   height: 100vh;
-  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
+  background-image: linear-gradient(rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.3)), 
                     url('../assets/mau-xe-o-to-dien-thumbnail.jpg');
   background-size: cover;
   background-position: center;
@@ -38,10 +38,10 @@
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   width: 100%;
-  max-width: 480px;
+  max-width: 380px;
   position: absolute;
   top: 30px;
-  right: 30px;
+  right: 40px;
   overflow: hidden;
   margin: 0;
 }
@@ -65,14 +65,14 @@
 }
 
 .login-content {
-  padding: 60px 50px 50px;
+  padding: 40px 35px 35px;
 }
 
 .login-title {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 800;
   color: #000;
-  margin: 0 0 40px 0;
+  margin: 0 0 30px 0;
   text-align: center;
   letter-spacing: -0.5px;
 }
@@ -82,6 +82,7 @@
   font-weight: 600;
   color: #333;
   margin-bottom: 8px;
+  display: block;
 }
 
 .custom-input {
@@ -97,7 +98,7 @@
 }
 
 .custom-input:focus {
-  border-bottom-color: #007bff !important;
+  border-bottom-color: #FFD700 !important;
   box-shadow: none !important;
 }
 
@@ -127,17 +128,20 @@
 
 .login-button {
   height: 48px;
-  background: #007bff !important;
+  background: #FFD700 !important;
   border: none !important;
   border-radius: 8px !important;
   font-size: 16px;
   font-weight: 700;
   margin-top: 20px;
   letter-spacing: 0.5px;
+  color: #333 !important;
 }
 
 .login-button:hover {
-  background: #0056b3 !important;
+  background: #FFC700 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
 }
 
 .divider {
@@ -207,14 +211,14 @@
 }
 
 .signup-text {
-  color: #dc3545;
+  color: #FFD700;
   text-decoration: none;
   font-weight: 600;
 }
 
 .signup-text:hover {
   text-decoration: underline;
-  color: #dc3545;
+  color: #FFA500;
 }
 
 /* Desktop Optimizations */
@@ -228,18 +232,18 @@
   }
   
   .login-card {
-    max-width: 520px;
+    max-width: 420px;
     top: 40px;
-    right: 40px;
+    right: 50px;
   }
   
   .login-content {
-    padding: 70px 60px 60px;
+    padding: 50px 45px 45px;
   }
   
   .login-title {
-    font-size: 40px;
-    margin-bottom: 50px;
+    font-size: 32px;
+    margin-bottom: 40px;
   }
 }
 
