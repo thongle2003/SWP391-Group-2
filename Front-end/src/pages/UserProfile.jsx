@@ -9,6 +9,7 @@ function UserProfile() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [showAddAccountModal, setShowAddAccountModal] = useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false)
   const [newAccount, setNewAccount] = useState({
     name: '',
     icon: '💳',
@@ -18,7 +19,7 @@ function UserProfile() {
   })
 
   // Sample user data
-  const userData = {
+  const [userData, setUserData] = useState({
     name: 'Sơn Trường Giang',
     age: 16,
     gender: 'Nam',
@@ -32,7 +33,9 @@ function UserProfile() {
     serviceStatus: 'Đang sử dụng',
     renewalDate: 'ĐK 1 năm',
     tags: ['KV Hà Nội', 'KH Premium', 'ĐK 1 năm']
-  }
+  })
+
+  const [editedUserData, setEditedUserData] = useState({...userData})
 
   const stats = {
     totalDeposit: '2,021,345,000',
@@ -88,6 +91,21 @@ function UserProfile() {
 
   const handleInputChange = (field, value) => {
     setNewAccount({ ...newAccount, [field]: value })
+  }
+
+  const handleEditProfileClick = () => {
+    setEditedUserData({...userData})
+    setShowEditProfileModal(true)
+  }
+
+  const handleProfileInputChange = (field, value) => {
+    setEditedUserData({ ...editedUserData, [field]: value })
+  }
+
+  const handleSaveProfile = () => {
+    setUserData({...editedUserData})
+    setShowEditProfileModal(false)
+    alert('Thông tin đã được cập nhật thành công!')
   }
 
   return (
@@ -150,7 +168,15 @@ function UserProfile() {
 
               {/* Contact Info */}
               <div className="contact-info">
-                <h3 className="section-title-small">Chính sửa thông tin</h3>
+                <div className="contact-info-header">
+                  <h3 className="section-title-small">Thông tin liên hệ</h3>
+                  <button className="edit-info-btn" title="Chỉnh sửa thông tin" onClick={handleEditProfileClick}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                </div>
                 
                 <div className="info-item">
                   <span className="info-icon">📞</span>
@@ -369,6 +395,141 @@ function UserProfile() {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {showEditProfileModal && (
+        <div className="modal-overlay" onClick={() => setShowEditProfileModal(false)}>
+          <div className="modal-content edit-profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Chỉnh sửa thông tin cá nhân</h2>
+              <button className="modal-close" onClick={() => setShowEditProfileModal(false)}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Họ và tên *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập họ và tên"
+                    value={editedUserData.name}
+                    onChange={(e) => handleProfileInputChange('name', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Tuổi *</label>
+                  <input 
+                    type="number" 
+                    placeholder="Nhập tuổi"
+                    value={editedUserData.age}
+                    onChange={(e) => handleProfileInputChange('age', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Giới tính *</label>
+                  <select 
+                    value={editedUserData.gender}
+                    onChange={(e) => handleProfileInputChange('gender', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Địa chỉ *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập địa chỉ"
+                    value={editedUserData.location}
+                    onChange={(e) => handleProfileInputChange('location', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Số điện thoại *</label>
+                  <input 
+                    type="tel" 
+                    placeholder="Nhập số điện thoại"
+                    value={editedUserData.phone}
+                    onChange={(e) => handleProfileInputChange('phone', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input 
+                    type="email" 
+                    placeholder="Nhập email"
+                    value={editedUserData.email}
+                    onChange={(e) => handleProfileInputChange('email', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Quốc gia/Khu vực</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập quốc gia"
+                    value={editedUserData.country}
+                    onChange={(e) => handleProfileInputChange('country', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Quận/Huyện</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập quận/huyện"
+                    value={editedUserData.district}
+                    onChange={(e) => handleProfileInputChange('district', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Segment</label>
+                <input 
+                  type="text" 
+                  placeholder="Nhập segment"
+                  value={editedUserData.segment}
+                  onChange={(e) => handleProfileInputChange('segment', e.target.value)}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setShowEditProfileModal(false)}>
+                Hủy
+              </button>
+              <button 
+                className="btn-submit" 
+                onClick={handleSaveProfile}
+              >
+                Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Account Modal */}
       {showAddAccountModal && (

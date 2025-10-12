@@ -158,6 +158,38 @@
   margin-bottom: 20px;
 }
 
+.contact-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.edit-info-btn {
+  background: linear-gradient(135deg, #FFD700, #FFC700);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.edit-info-btn svg {
+  stroke: #1a1a2e;
+  stroke-width: 2;
+}
+
+.edit-info-btn:hover {
+  background: linear-gradient(135deg, #FFC700, #FFB700);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+}
+
 .info-item {
   display: flex;
   gap: 12px;
@@ -724,6 +756,7 @@
   border-radius: 8px;
   font-size: 14px;
   color: #2c3e50;
+  background: white;
   transition: all 0.3s;
   font-family: inherit;
 }
@@ -801,6 +834,18 @@
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+/* Edit Profile Modal */
+.edit-profile-modal {
+  max-width: 700px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .btn-cancel,

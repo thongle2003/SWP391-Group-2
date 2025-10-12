@@ -2,37 +2,35 @@
 .register-page {
   width: 100vw;
   height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 0;
   margin: 0;
   position: fixed;
   top: 0;
   left: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* Video Background */
 .background-video {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
   z-index: 0;
+  min-width: 100%;
+  min-height: 100%;
 }
 
 /* Overlay to darken video slightly */
 .register-page::before {
   content: '';
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.3);
   z-index: 1;
 }
@@ -45,7 +43,7 @@
   font-weight: 900;
   color: #FFD700;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-  z-index: 100;
+  z-index: 200;
   letter-spacing: 4px;
   white-space: nowrap;
   font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
@@ -54,17 +52,23 @@
 }
 
 .register-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  width: 100%;
-  max-width: 380px;
-  position: absolute;
-  top: 30px;
-  right: 40px;
-  overflow: hidden;
-  margin: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: -5px 0 30px rgba(0,0,0,0.1);
+  width: 33.33%;
+  min-width: 450px;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  overflow-y: auto;
   z-index: 10;
+  height: 100vh;
+  display: flex;
+  align-items: center;
 }
 
 .language-selector {
@@ -78,7 +82,7 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  z-index: 5;
+  z-index: 20;
 }
 
 .language-selector svg {
@@ -86,11 +90,12 @@
 }
 
 .register-content {
-  padding: 30px 35px 30px;
+  padding: 30px 50px;
+  width: 100%;
 }
 
 .register-title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   color: #000;
   margin: 0 0 20px 0;
@@ -113,9 +118,9 @@
   background: transparent !important;
   font-size: 15px;
   color: #333;
-  padding: 10px 4px;
+  padding: 12px 4px;
   box-shadow: none !important;
-  height: 42px;
+  height: 45px;
 }
 
 .custom-input:focus {
@@ -160,13 +165,13 @@
 }
 
 .register-button {
-  height: 44px;
+  height: 50px;
   background: #FFD700 !important;
   border: none !important;
   border-radius: 8px !important;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  margin-top: 15px;
+  margin-top: 20px;
   letter-spacing: 0.5px;
   color: #333 !important;
 }
@@ -179,7 +184,7 @@
 
 .divider {
   text-align: center;
-  margin: 20px 0;
+  margin: 15px 0;
   position: relative;
 }
 
@@ -213,11 +218,11 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  height: 42px;
+  height: 48px;
   border: 2px solid #e0e0e0 !important;
   background: white !important;
   border-radius: 8px !important;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #333 !important;
   transition: all 0.3s ease;
