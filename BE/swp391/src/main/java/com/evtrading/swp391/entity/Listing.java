@@ -48,6 +48,9 @@ public class Listing {
     private Date startDate;
     private Date expiryDate;
     private Integer extendedTimes;
+    
+    // Trung bình đánh giá (average rating) cho listing, cập nhật khi có review mới
+    private Double averageRating;
 
     // Getters and Setters
     public Integer getListingID() { return listingID; }
@@ -78,5 +81,7 @@ public class Listing {
     public void setExpiryDate(Date expiryDate) { this.expiryDate = expiryDate;}
     public Integer getExtendedTimes() { return extendedTimes; }
     public void setExtendedTimes(Integer extendedTimes) { this.extendedTimes = extendedTimes;}
+    public Double getAverageRating() { return averageRating; }
+    public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
     
 }
