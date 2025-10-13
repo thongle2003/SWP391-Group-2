@@ -549,6 +549,10 @@
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
+.stat-icon.orange {
+  background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%);
+}
+
 .stat-content label {
   display: block;
   font-size: 13px;

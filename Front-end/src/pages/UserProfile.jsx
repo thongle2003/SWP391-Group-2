@@ -8,15 +8,7 @@ import './UserProfile.css'
 function UserProfile() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
-  const [showAddAccountModal, setShowAddAccountModal] = useState(false)
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
-  const [newAccount, setNewAccount] = useState({
-    name: '',
-    icon: '💳',
-    accountNumber: '',
-    status: 'active',
-    color: '#4a90e2'
-  })
 
   // Sample user data
   const [userData, setUserData] = useState({
@@ -44,15 +36,11 @@ function UserProfile() {
     interactions: 31,
     flow: 13,
     campaign: 13,
-    sequence: 5
+    sequence: 5,
+    ordersPurchased: 15,  // Tổng đơn hàng đã mua
+    ordersSold: 8         // Tổng đơn hàng đã bán
   }
 
-  const [linkedAccounts, setLinkedAccounts] = useState([
-    { name: 'MoMo', icon: '💳', accountNumber: '**** 6789', status: 'active', color: '#D82D8B' },
-    { name: 'VNPay', icon: '💰', accountNumber: '**** 1234', status: 'active', color: '#0066CC' },
-    { name: 'ZaloPay', icon: '💙', accountNumber: '**** 5678', status: 'active', color: '#008FE5' },
-    { name: 'VietcomBank', icon: '🏦', accountNumber: '**** 9012', status: 'active', color: '#007B4B' }
-  ])
 
   const channelStats = [
     { name: 'Messenger', icon: '💬', sent: 5000, opened: 2500, clicked: 1000 },
@@ -62,36 +50,6 @@ function UserProfile() {
     { name: 'Gmail', icon: '✉️', sent: 50, opened: 25, clicked: 5 }
   ]
 
-  // Available icons for selection
-  const availableIcons = ['💳', '💰', '💙', '🏦', '💵', '💴', '💶', '💷', '🏧', '💸']
-  const availableColors = [
-    { name: 'Hồng', value: '#D82D8B' },
-    { name: 'Xanh dương', value: '#0066CC' },
-    { name: 'Xanh lam', value: '#008FE5' },
-    { name: 'Xanh lá', value: '#007B4B' },
-    { name: 'Đỏ', value: '#E53935' },
-    { name: 'Cam', value: '#FB8C00' },
-    { name: 'Tím', value: '#8E24AA' },
-    { name: 'Vàng', value: '#FDD835' }
-  ]
-
-  const handleAddAccount = () => {
-    if (newAccount.name && newAccount.accountNumber) {
-      setLinkedAccounts([...linkedAccounts, { ...newAccount }])
-      setShowAddAccountModal(false)
-      setNewAccount({
-        name: '',
-        icon: '💳',
-        accountNumber: '',
-        status: 'active',
-        color: '#4a90e2'
-      })
-    }
-  }
-
-  const handleInputChange = (field, value) => {
-    setNewAccount({ ...newAccount, [field]: value })
-  }
 
   const handleEditProfileClick = () => {
     setEditedUserData({...userData})
@@ -299,35 +257,26 @@ function UserProfile() {
 
             {/* Stats Overview */}
             <div className="stats-grid">
-              {/* Linked Accounts Card */}
-              <div className="linked-accounts-card">
-                <div className="linked-accounts-header">
-                  <div className="header-content">
-                    <h3>Liên kết Ngân hàng & Ví điện tử</h3>
-                    <p>{linkedAccounts.length} tài khoản đã liên kết</p>
-                  </div>
-                  <button className="add-account-btn" onClick={() => setShowAddAccountModal(true)}>+ Thêm</button>
+              {/* Tổng đơn hàng đã mua */}
+              <div className="stat-card">
+                <div className="stat-icon blue">🛍️</div>
+                <div className="stat-content">
+                  <label>Tổng đơn hàng đã mua</label>
+                  <h3>{stats.ordersPurchased}</h3>
                 </div>
-                <div className="linked-accounts-list">
-                  {linkedAccounts.map((account, index) => (
-                    <div key={index} className="account-item">
-                      <div className="account-icon" style={{ background: account.color }}>
-                        {account.icon}
-                      </div>
-                      <div className="account-info">
-                        <h4>{account.name}</h4>
-                        <span className="account-number">{account.accountNumber}</span>
-                      </div>
-                      <span className={`account-status ${account.status}`}>
-                        {account.status === 'active' ? '✓ Đã kích hoạt' : 'Chưa kích hoạt'}
-                      </span>
-                    </div>
-                  ))}
+              </div>
+
+              {/* Tổng đơn hàng đã bán */}
+              <div className="stat-card">
+                <div className="stat-icon green">💰</div>
+                <div className="stat-content">
+                  <label>Tổng đơn hàng đã bán</label>
+                  <h3>{stats.ordersSold}</h3>
                 </div>
               </div>
 
               <div className="stat-card">
-                <div className="stat-icon green">🛒</div>
+                <div className="stat-icon orange">🛒</div>
                 <div className="stat-content">
                   <label>Tương tác</label>
                   <h3>{stats.interactions}</h3>
@@ -531,96 +480,6 @@ function UserProfile() {
         </div>
       )}
 
-      {/* Add Account Modal */}
-      {showAddAccountModal && (
-        <div className="modal-overlay" onClick={() => setShowAddAccountModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Thêm Ngân hàng / Ví điện tử</h2>
-              <button className="modal-close" onClick={() => setShowAddAccountModal(false)}>×</button>
-            </div>
-            
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Tên ngân hàng / ví *</label>
-                <input 
-                  type="text" 
-                  placeholder="VD: Techcombank, Agribank, Shopee Pay..."
-                  value={newAccount.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Số tài khoản *</label>
-                <input 
-                  type="text" 
-                  placeholder="VD: **** 1234"
-                  value={newAccount.accountNumber}
-                  onChange={(e) => handleInputChange('accountNumber', e.target.value)}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Chọn biểu tượng</label>
-                <div className="icon-selector">
-                  {availableIcons.map((icon, index) => (
-                    <button
-                      key={index}
-                      className={`icon-option ${newAccount.icon === icon ? 'selected' : ''}`}
-                      onClick={() => handleInputChange('icon', icon)}
-                    >
-                      {icon}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Chọn màu</label>
-                <div className="color-selector">
-                  {availableColors.map((color, index) => (
-                    <button
-                      key={index}
-                      className={`color-option ${newAccount.color === color.value ? 'selected' : ''}`}
-                      style={{ backgroundColor: color.value }}
-                      onClick={() => handleInputChange('color', color.value)}
-                      title={color.name}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Trạng thái</label>
-                <select 
-                  value={newAccount.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="form-select"
-                >
-                  <option value="active">Đã kích hoạt</option>
-                  <option value="inactive">Chưa kích hoạt</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button className="btn-cancel" onClick={() => setShowAddAccountModal(false)}>
-                Hủy
-              </button>
-              <button 
-                className="btn-submit" 
-                onClick={handleAddAccount}
-                disabled={!newAccount.name || !newAccount.accountNumber}
-              >
-                Thêm tài khoản
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <Footer />
     </div>
