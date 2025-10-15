@@ -1,11 +1,11 @@
 package com.evtrading.swp391.service;
 
 import com.evtrading.swp391.entity.Listing;
-import com.evtrading.swp391.entity.OrderItem;
+import com.evtrading.swp391.entity.Order;
 import com.evtrading.swp391.entity.Review;
 import com.evtrading.swp391.entity.User;
 import com.evtrading.swp391.repository.ListingRepository;
-import com.evtrading.swp391.repository.OrderItemRepository;
+import com.evtrading.swp391.repository.OrderRepository;
 import com.evtrading.swp391.repository.ReviewRepository;
 import com.evtrading.swp391.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -21,13 +21,13 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
-    private final OrderItemRepository orderItemRepository;
+    private final OrderRepository orderRepository;
 
-    public ReviewService(ReviewRepository reviewRepository, UserRepository userRepository, ListingRepository listingRepository, OrderItemRepository orderItemRepository) {
+    public ReviewService(ReviewRepository reviewRepository, UserRepository userRepository, ListingRepository listingRepository, OrderRepository orderRepository) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.listingRepository = listingRepository;
-        this.orderItemRepository = orderItemRepository;
+        this.orderRepository = orderRepository;
     }
 
     /**
@@ -40,11 +40,10 @@ public class ReviewService {
         Optional<Listing> l = listingRepository.findById(listingId);
         if (u.isEmpty() || l.isEmpty()) return Optional.empty();
 
-        // Kiểm tra user có mua listing này không: tìm OrderItem với listing
-        List<OrderItem> items = orderItemRepository.findByListing(l.get());
-        boolean bought = items.stream().anyMatch(it -> it.getOrder() != null && it.getOrder().getBuyer() != null && it.getOrder().getBuyer().getUserID().equals(userId)
-                && "Completed".equalsIgnoreCase(it.getOrder().getStatus()));
-        if (!bought) return Optional.empty();
+    // Kiểm tra user có mua listing này không: tìm Order với buyer, listing và status = Completed
+    List<Order> orders = orderRepository.findByBuyerAndListingAndStatus(u.get(), l.get(), "Completed");
+    boolean bought = orders != null && !orders.isEmpty();
+    if (!bought) return Optional.empty();
 
         Review r = new Review();
         r.setUser(u.get());
