@@ -34,10 +34,10 @@ public class Listing {
     @JoinColumn(name = "batteryID")
     private Battery battery;
 
-    @Column(nullable = false)
+    @Column(nullable = false,columnDefinition = "NVARCHAR(MAX)")
     private String title;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
+    @Column(columnDefinition = "text")
     private String description;
 
     @Column(nullable = false)
@@ -48,6 +48,9 @@ public class Listing {
     private Date startDate;
     private Date expiryDate;
     private Integer extendedTimes;
+
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String rejectionReason;
 
     // Getters and Setters
     public Integer getListingID() { return listingID; }
@@ -78,5 +81,10 @@ public class Listing {
     public void setExpiryDate(Date expiryDate) { this.expiryDate = expiryDate;}
     public Integer getExtendedTimes() { return extendedTimes; }
     public void setExtendedTimes(Integer extendedTimes) { this.extendedTimes = extendedTimes;}
-    
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
 }
