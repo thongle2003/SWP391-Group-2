@@ -20,30 +20,53 @@ const apiService = {
     const data = await response.json();
     
     // Debug: Log response từ backend
-    console.log('Login response:', data);
+    console.log('✅ Login API Response:', data);
     
     // Lưu token vào localStorage
     if (data.token) {
       localStorage.setItem('authToken', data.token);
+      localStorage.setItem('tokenType', data.tokenType || 'Bearer ');
       console.log('Token saved:', data.token);
     }
     
-    // Xác định user data (có thể ở data.user hoặc trực tiếp trong data)
-    let userData = data.user || data;
+    // Lưu user data (data ở root level từ API)
+    const userData = {
+      id: data.userID,
+      userID: data.userID,
+      username: data.username,
+      email: data.email,
+      role: data.role
+    };
     
-    // Nếu có username/email thì coi đó là user data
-    if (userData && (userData.username || userData.email || userData.name)) {
-      console.log('User data:', userData);
-      localStorage.setItem('userData', JSON.stringify(userData));
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('isLoggedIn', 'true');
-      
-      // Lưu userID riêng nếu có
-      if (userData.id || userData.userID) {
-        localStorage.setItem('userID', userData.id || userData.userID);
-      }
-    } else {
-      console.warn('No user data found in response');
+    localStorage.setItem('userData', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userID', data.userID);
+    localStorage.setItem('username', data.username);
+    
+    // ===== LẤY ATTRIBUTE ROLE TỪ API =====
+    const roleAttribute = data.role; // getAttribute từ response
+    
+    // Chuyển đổi role string sang role ID
+    let roleId = 3; // Default: Member
+    if (roleAttribute === 'Admin') {
+      roleId = 1;
+    } else if (roleAttribute === 'Moderator') {
+      roleId = 2;
+    } else if (roleAttribute === 'Member') {
+      roleId = 3;
+    }
+    
+    // Lưu role vào localStorage
+    localStorage.setItem('role', roleId.toString());
+    localStorage.setItem('roleId', roleId.toString());
+    localStorage.setItem('roleName', roleAttribute);
+    
+    console.log('📌 Role getAttribute:', roleAttribute, '→ ID:', roleId);
+    
+    // ===== THÔNG BÁO THEO ROLE =====
+    if (roleAttribute === 'Admin') {
+      alert(`✅ Đã đăng nhập là ADMIN\n\nUser: ${data.username}\nEmail: ${data.email}`);
     }
 
     return data;
