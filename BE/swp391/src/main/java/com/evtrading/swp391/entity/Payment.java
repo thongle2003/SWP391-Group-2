@@ -10,8 +10,8 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer paymentID;
 
-    @ManyToOne
-    @JoinColumn(name = "transactionID", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "transactionID", unique = true)
     private Transaction transaction;
 
     private BigDecimal amount;
