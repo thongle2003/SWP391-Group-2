@@ -48,6 +48,9 @@ public class Listing {
     private Date startDate;
     private Date expiryDate;
     private Integer extendedTimes;
+    
+    // Trung bình đánh giá (average rating) cho listing, cập nhật khi có review mới
+    private Double averageRating;
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String rejectionReason;
@@ -87,4 +90,7 @@ public class Listing {
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
     }
+    public Double getAverageRating() { return averageRating; }
+    public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
+    
 }
