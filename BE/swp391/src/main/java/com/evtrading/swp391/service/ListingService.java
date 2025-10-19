@@ -48,6 +48,12 @@ public class ListingService {
     @Autowired
     private ListingMapper listingMapper;
 
+    @Autowired
+    private SpamFilterService spamFilterService;
+
+    @Autowired
+    private ComplaintRepository complaintRepository;
+
     /**
      * Tạo một bài đăng mới
      */
@@ -96,11 +102,32 @@ public class ListingService {
             listing.setBattery(battery);
         }
 
-        // 5. Lưu Listing
+        // Prepare image URLs
+        List<String> imageUrls = images != null ? cloudinaryService.uploadImages(images) : dto.getImageURLs();
+
+        // Run spam filter BEFORE saving final listing
+        SpamFilterService.SpamResult spamResult = spamFilterService.check(listing, imageUrls);
+        if (spamResult.flagged) {
+            // Mark listing as flagged/pending review
+            listing.setStatus("FLAGGED");
+        }
+
+        // 5. Lưu Listing (even if flagged)
         Listing savedListing = listingRepository.save(listing);
 
-        List<String> imageUrls = images != null ? cloudinaryService.uploadImages(images) : dto.getImageURLs();
+        // Save images
         List<ListingImage> listingImages = saveListingImages(savedListing, imageUrls, dto.getPrimaryImageIndex());
+
+        // If flagged, create automated complaint for moderators to review
+        if (spamResult.flagged) {
+            Complaint c = new Complaint();
+            c.setUser(user); // reporter is system; using the listing owner as reference here might be ambiguous
+            c.setListing(savedListing);
+            c.setContent("Automated spam detection: " + String.join("; ", spamResult.reasons));
+            c.setStatus("Pending");
+            c.setCreatedAt(new Date());
+            complaintRepository.save(c);
+        }
 
         return convertToListingResponseDTO(savedListing, listingImages);
     }
