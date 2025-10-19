@@ -1,19 +1,12 @@
-package com.evtrading.swp391.entity;
+package com.evtrading.swp391.dto;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
-@Entity
-public class Payment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer paymentID;
-
-    @ManyToOne
-    @JoinColumn(name = "transactionID", nullable = false)
-    private Transaction transaction;
-
+public class PaymentResponseDTO {
+    private Integer paymentId;
+    private Integer transactionId;
+    private Integer orderId;
     private BigDecimal amount;
     private String method;
     private String provider;
@@ -21,10 +14,12 @@ public class Payment {
     private Date paidAt;
 
     // Getters and Setters
-    public Integer getPaymentID() { return paymentID; }
-    public void setPaymentID(Integer paymentID) { this.paymentID = paymentID; }
-    public Transaction getTransaction() { return transaction; }
-    public void setTransaction(Transaction transaction) { this.transaction = transaction; }
+    public Integer getPaymentId() { return paymentId; }
+    public void setPaymentId(Integer paymentId) { this.paymentId = paymentId; }
+    public Integer getTransactionId() { return transactionId; }
+    public void setTransactionId(Integer transactionId) { this.transactionId = transactionId; }
+    public Integer getOrderId() { return orderId; }
+    public void setOrderId(Integer orderId) { this.orderId = orderId; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public String getMethod() { return method; }
@@ -35,5 +30,4 @@ public class Payment {
     public void setStatus(String status) { this.status = status; }
     public Date getPaidAt() { return paidAt; }
     public void setPaidAt(Date paidAt) { this.paidAt = paidAt; }
-    
 }

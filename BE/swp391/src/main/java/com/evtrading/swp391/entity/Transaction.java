@@ -16,6 +16,7 @@ public class Transaction {
     private Order order;
 
     private BigDecimal totalAmount;
+    private BigDecimal paidAmount;
     private Date transactionDate;
     private String status;
     private Date createdAt;
@@ -28,6 +29,8 @@ public class Transaction {
     public void setOrder(Order order) { this.order = order; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount;}
+    public BigDecimal getPaidAmount() { return paidAmount; }
+    public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
     public Date getTransactionDate() { return transactionDate; }
     public void setTransactionDate(Date transactionDate) { this.transactionDate = transactionDate; }
     public String getStatus() { return status; }

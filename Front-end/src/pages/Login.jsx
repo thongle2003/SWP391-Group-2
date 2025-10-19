@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import backgroundVideo from '../assets/33vfxVliVS7mnZQ8o2LDBHzOqvL.mp4'
-import api from '../services/api'
+import apiService from '../services/apiService'
 import './Login.css'
 
 function Login() {
@@ -16,25 +16,40 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    
+    // Validation
+    if (!username || !password) {
+      setError('Vui lòng điền đầy đủ thông tin')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const response = await api.post('/users/login', {
+      // Call API login - apiService sẽ tự động lưu token và user data
+      const response = await apiService.login({
         username,
         password
       })
 
-      // Lưu thông tin user vào localStorage
-      if (response.data) {
-        localStorage.setItem('user', JSON.stringify(response.data))
-        localStorage.setItem('isLoggedIn', 'true')
+      // Kiểm tra response có token
+      if (response && response.token) {
+        // Đăng nhập thành công
+        console.log('Login successful, redirecting to home...')
         
-        // Chuyển về trang chủ
-        navigate('/')
+        // Trigger custom event để Header reload user data
+        window.dispatchEvent(new Event('storage'))
+        
+        // Đợi một chút để localStorage được cập nhật
+        setTimeout(() => {
+          navigate('/')
+        }, 100)
+      } else {
+        setError('Đăng nhập thất bại')
       }
     } catch (err) {
       console.error('Login error:', err)
-      setError(err.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
+      setError(err.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
     } finally {
       setLoading(false)
     }
