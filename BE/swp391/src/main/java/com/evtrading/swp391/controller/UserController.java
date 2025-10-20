@@ -85,6 +85,31 @@ public class UserController {
         return ResponseEntity.ok(saved);
     }
 
+    // Enable user by id (chỉ các Member và Moderator) — set status về Active
+    @PostMapping("/{id}/enable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> enableUser(@PathVariable Integer id) {
+        Optional<User> opt = userService.getUserById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        User user = opt.get();
+        Role role = user.getRole();
+        String roleName = role != null ? role.getRoleName() : null;
+        if (roleName == null) {
+            return ResponseEntity.status(403).build();
+            // role null trả về 403 Forbidden
+        }
+        // Only allow enabling users with role Member or Moderator
+        if (!roleName.equalsIgnoreCase("Member") && !roleName.equalsIgnoreCase("Moderator")) {
+            return ResponseEntity.status(403).build();
+            // role khác Member và Moderator trả về 403 Forbidden
+        }
+        user.setStatus("Active");
+        User saved = userService.createUser(user);
+        return ResponseEntity.ok(saved);
+    }    
+
     // Approve user by id (only if user is Pending and role is Member) 
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
