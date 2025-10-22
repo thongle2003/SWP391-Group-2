@@ -6,6 +6,9 @@ import com.evtrading.swp391.repository.BrandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class BrandService {
 
@@ -21,5 +24,14 @@ public class BrandService {
         response.setBrandId(savedBrand.getBrandID());
         response.setBrandName(savedBrand.getBrandName());
         return response;
+    }
+
+    public List<BrandDTO> getAllBrands() {
+        return brandRepository.findAll().stream().map(brand -> {
+            BrandDTO dto = new BrandDTO();
+            dto.setBrandId(brand.getBrandID());
+            dto.setBrandName(brand.getBrandName());
+            return dto;
+        }).collect(Collectors.toList());
     }
 }
