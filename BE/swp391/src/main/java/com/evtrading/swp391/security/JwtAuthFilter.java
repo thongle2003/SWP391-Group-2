@@ -61,9 +61,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * @param filterChain chuỗi filter còn lại cần được xử lý
      */
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, 
+            @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+        
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        
         try {
             // Trích xuất JWT từ header Authorization
             String jwt = parseJwt(request);
