@@ -6,6 +6,9 @@ import com.evtrading.swp391.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class CategoryService {
 
@@ -21,5 +24,14 @@ public class CategoryService {
         response.setCategoryId(savedCategory.getCategoryID());
         response.setCategoryName(savedCategory.getCategoryName());
         return response;
+    }
+
+    public List<CategoryDTO> getAllCategories() {
+        return categoryRepository.findAll().stream().map(category -> {
+            CategoryDTO dto = new CategoryDTO();
+            dto.setCategoryId(category.getCategoryID());
+            dto.setCategoryName(category.getCategoryName());
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

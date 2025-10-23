@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/brands")
 @Tag(name = "Brands", description = "API để quản lý thương hiệu")
@@ -29,4 +31,12 @@ public class BrandController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+
+    @Operation(summary = "Lấy danh sách thương hiệu", description = "Lấy tất cả thương hiệu")
+    @GetMapping
+    public ResponseEntity<List<BrandDTO>> getAllBrands() {
+        List<BrandDTO> brands = brandService.getAllBrands();
+        return ResponseEntity.ok(brands);
+    }
+
 }

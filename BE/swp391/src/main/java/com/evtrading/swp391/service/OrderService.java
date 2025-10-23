@@ -94,7 +94,8 @@ public class OrderService {
         transaction.setPaidAmount(BigDecimal.ZERO);
         transaction.setStatus("PENDING");
         transaction.setCreatedAt(new Date());
-        transaction.setDueTime(new Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000));
+        // Thiết lập thời hạn thanh toán từ system config (đang để cố định 7 ngày)
+        transaction.setDueTime(new Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000)); 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // Cập nhật Listing status
@@ -167,6 +168,12 @@ public class OrderService {
                              ? "FULLY_PAID" : "PARTIALLY_PAID");
         transaction.setTransactionDate(new Date());
         transactionRepository.save(transaction);
+
+        // Cập nhật Order nếu đã thanh toán đủ
+        if (transaction.getStatus().equals("FULLY_PAID")) {
+            order.setStatus("COMPLETED");
+            orderRepository.save(order);
+        }
 
         // Tạo response DTO
         PaymentResponseDTO response = new PaymentResponseDTO();
