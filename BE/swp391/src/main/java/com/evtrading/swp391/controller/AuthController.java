@@ -3,9 +3,11 @@ package com.evtrading.swp391.controller;
 import com.evtrading.swp391.dto.AuthResponseDTO;
 import com.evtrading.swp391.dto.LoginRequestDTO;
 import com.evtrading.swp391.dto.RegisterRequestDTO;
+import com.evtrading.swp391.dto.SocialLoginRequestDTO;
 import com.evtrading.swp391.entity.User;
 import com.evtrading.swp391.repository.UserRepository;
 import com.evtrading.swp391.security.JwtUtils;
+import com.evtrading.swp391.service.SocialAuthService;
 import com.evtrading.swp391.service.UserService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -20,7 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-
 /**
  * Controller xử lý các yêu cầu xác thực như đăng nhập và đăng ký
  * Endpoint gốc: /api/auth
@@ -28,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private final SocialAuthService socialAuthService;
 
     /**
      * AuthenticationManager là thành phần chính của Spring Security
@@ -51,41 +54,44 @@ public class AuthController {
     @Autowired
     UserRepository userRepository;
 
+    AuthController(SocialAuthService socialAuthService) {
+        this.socialAuthService = socialAuthService;
+    }
+
     /**
      * API đăng nhập: Xác thực người dùng và trả về JWT token
      * 
      * Luồng xử lý:
      * 1. Nhận request chứa username và password
      * 2. Sử dụng AuthenticationManager để xác thực thông tin đăng nhập
-     *    - Bên trong, AuthenticationManager sẽ gọi UserDetailsService để load user từ database
-     *    - So sánh password người dùng nhập với password trong database
+     * - Bên trong, AuthenticationManager sẽ gọi UserDetailsService để load user từ
+     * database
+     * - So sánh password người dùng nhập với password trong database
      * 3. Nếu thông tin hợp lệ, tạo JWT token
      * 4. Trả về token cho client
      * 
      * @param loginRequest DTO chứa username và password
      * @return JWT token nếu đăng nhập thành công, lỗi nếu thất bại
      */
-    @SecurityRequirements  // Loại bỏ yêu cầu security trong Swagger UI
+    @SecurityRequirements // Loại bỏ yêu cầu security trong Swagger UI
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequestDTO loginRequest) {
         try {
             // Log chi tiết thông tin đăng nhập
             System.out.println("Attempting login: " + loginRequest.getUsername());
-            
+
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    loginRequest.getUsername(),
-                    loginRequest.getPassword()
-                )
-            );
-            
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()));
+
             // Nếu không có exception, xác thực thành công
             System.out.println("Authentication successful for: " + loginRequest.getUsername());
-            
+
             // Lưu context và tạo token
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtils.generateJwtToken(authentication);
-            
+
             // Lấy thông tin chi tiết của người dùng
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
@@ -97,8 +103,7 @@ public class AuthController {
                     user.getUserID(),
                     user.getUsername(),
                     user.getEmail(),
-                    user.getRole().getRoleName()
-            );
+                    user.getRole().getRoleName());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -106,7 +111,7 @@ public class AuthController {
             System.err.println("Authentication error: " + e.getClass().getName());
             System.err.println("Error message: " + e.getMessage());
             e.printStackTrace();
-            
+
             // Trả về lỗi 401 thay vì 403
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Authentication failed: " + e.getMessage());
@@ -119,9 +124,9 @@ public class AuthController {
      * Luồng xử lý:
      * 1. Nhận request chứa thông tin đăng ký (username, email, password)
      * 2. Gọi UserService để xử lý đăng ký
-     *    - Kiểm tra username và email đã tồn tại chưa
-     *    - Tạo user mới với trạng thái "Pending" (chờ duyệt)
-     *    - Gán role mặc định là "Member"
+     * - Kiểm tra username và email đã tồn tại chưa
+     * - Tạo user mới với trạng thái "Pending" (chờ duyệt)
+     * - Gán role mặc định là "Member"
      * 3. Trả về kết quả đăng ký
      * 
      * @param registerRequest DTO chứa thông tin đăng ký
@@ -132,13 +137,13 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequestDTO registerRequest) {
         // Gọi service để xử lý đăng ký
         User user = userService.register(registerRequest);
-        
+
         // Kiểm tra kết quả
         if (user != null) {
             // Đăng ký thành công, trả về mã 201 (Created)
             return ResponseEntity.status(201).body("User registered successfully!");
         }
-        
+
         // Đăng ký thất bại do username hoặc email đã tồn tại
         return ResponseEntity.badRequest().body("Error: Username or email is already taken!");
     }
@@ -151,9 +156,16 @@ public class AuthController {
      * 
      * @return Thông báo đăng xuất thành công
      */
-    @SecurityRequirements  // Thêm annotation này
+    @SecurityRequirements // Thêm annotation này
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser() {
         return ResponseEntity.ok().body("Đăng xuất thành công!");
     }
+
+    @SecurityRequirements
+    @PostMapping("/social")
+  public ResponseEntity<?> social(@RequestBody SocialLoginRequestDTO request) {
+        var token = socialAuthService.login(request);
+        return ResponseEntity.ok(token);
+  }
 }

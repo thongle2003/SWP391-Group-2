@@ -19,6 +19,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+
 
 /**
  * Cấu hình chính của Spring Security cho ứng dụng
@@ -88,7 +91,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         // Tạm thời dùng NoOpPasswordEncoder để giữ cơ chế mật khẩu plaintext
         // CẢNH BÁO: Đây là cấu hình không an toàn, chỉ nên dùng trong development
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
 
         /*
         // Đây là cách đúng để mã hóa mật khẩu cho môi trường production
@@ -104,30 +107,22 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        
-        // Cấu hình session management
         http.sessionManagement(session -> 
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Vô hiệu hóa CSRF và cấu hình CORS
         http.csrf(AbstractHttpConfigurer::disable);
         http.cors(Customizer.withDefaults());
         
-        
-        // Cấu hình authorization
         http.authorizeHttpRequests(auth -> 
             auth
-                // Cho phép truy cập không cần xác thực
+                .requestMatchers("/api/auth/**").permitAll()  // Cho phép tất cả request tới /api/auth/**
+                .requestMatchers("/api/auth/social").permitAll() // Đảm bảo endpoint social login được permit
                 .requestMatchers(SecurityPaths.publicEndpoints()).permitAll()
-                // Các endpoint khác yêu cầu xác thực
                 .anyRequest().authenticated()
         );
         
-        // Đảm bảo JWT filter chỉ được áp dụng sau khi đã xác thực
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-        
-        
         
         return http.build();
     }

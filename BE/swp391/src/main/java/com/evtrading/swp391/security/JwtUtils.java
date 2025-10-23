@@ -9,7 +9,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 
 /**
@@ -62,7 +64,7 @@ public class JwtUtils {
     public String generateJwtToken(Authentication authentication) {
         // Lấy thông tin người dùng từ đối tượng Authentication
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
-        
+
         // Tạo token với username
         return generateTokenFromUsername(userPrincipal.getUsername());
     }
@@ -113,13 +115,18 @@ public class JwtUtils {
      * @throws Exception Nếu token không hợp lệ hoặc hết hạn
      */
     public String getUserNameFromJwtToken(String token) {
-        // Parse token, xác thực bằng khóa, và lấy thông tin subject (username)
-        return Jwts.parserBuilder()
+        Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key())
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
+                
+        // Decode với UTF-8
+        String username = claims.get("username", String.class);
+        if (username != null) {
+            return new String(username.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        }
+        return claims.getSubject();
     }
 
     /**
@@ -151,4 +158,29 @@ public class JwtUtils {
         }
         return false;
     }
+
+    public static String base64UrlEncode(String s) {
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(s.getBytes(StandardCharsets.UTF_8)); // << use UTF-8
+    }
+
+    public static String base64UrlDecodeToString(String b64) {
+        byte[] decoded = Base64.getUrlDecoder().decode(b64);
+        return new String(decoded, StandardCharsets.UTF_8); // << use UTF-8
+    }
+    public static String decodeBase64(String encoded) {
+        byte[] bytes = Base64.getUrlDecoder().decode(encoded);
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    public static String parseToken(String token) {
+        String[] parts = token.split("\\.");
+        if (parts.length == 3) {
+            String payload = decodeBase64(parts[1]); 
+            return payload;
+        }
+        return null;
+    }
 }
+
+
