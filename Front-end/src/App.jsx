@@ -4,6 +4,7 @@ import About from './pages/About'
 import BuyCars from './pages/BuyCars'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import ProductDetail from './pages/ProductDetail'
 import Register from './pages/Register'
 import Search from './pages/Search'
 import SellCars from './pages/SellCars'
@@ -18,6 +19,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/buy" element={<BuyCars />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/sell" element={<SellCars />} />
         <Route path="/search" element={<Search />} />
         <Route path="/about" element={<About />} />

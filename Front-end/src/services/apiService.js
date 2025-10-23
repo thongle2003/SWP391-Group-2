@@ -1,9 +1,7 @@
 // API service for handling all backend communications
-<<<<<<< HEAD
+
 const API_BASE_URL = 'http://localhost:8080/api';
-=======
-const API_BASE_URL = 'http://localhost:8081/api'; //
->>>>>>> 8dde1af8686a9ce0490e059077050d63de44ade6
+
 
 const apiService = {
   // thêm export của API_BASE_URL để các module khác có thể dùng trực tiếp
