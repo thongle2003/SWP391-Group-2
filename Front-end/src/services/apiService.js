@@ -1,5 +1,5 @@
 // API service for handling all backend communications
-const API_BASE_URL = 'http://localhost:8081/api'; //Cái này thay đổi tùy theo port của be 80 hay 81
+const API_BASE_URL = 'http://localhost:8080/api'; //Cái này thay đổi tùy theo port của be 80 hay 81
 
 const apiService = {
   // thêm export của API_BASE_URL để các module khác có thể dùng trực tiếp
