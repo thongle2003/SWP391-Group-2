@@ -30,7 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * Tiện ích để xử lý JWT (tạo, xác thực, trích xuất thông tin)
      */
     @Autowired
-    private JwtUtils jwtUtils;
+    private JwtProvider jwtProvider;
 
     /**
      * Service để tải thông tin người dùng từ database dựa vào username
@@ -73,9 +73,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
 
             // Nếu JWT tồn tại và hợp lệ
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+            if (jwt != null && jwtProvider.validateJwtToken(jwt)) {
                 // Lấy username từ JWT
-                String username = jwtUtils.getUserNameFromJwtToken(jwt);
+                String username = jwtProvider.getUserNameFromJwtToken(jwt);
 
                 // Tải thông tin người dùng từ database dựa vào username
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
