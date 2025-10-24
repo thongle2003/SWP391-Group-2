@@ -2,9 +2,10 @@ package com.evtrading.swp391.controller;
 
 import com.evtrading.swp391.entity.User;
 import com.evtrading.swp391.service.UserService;
+import com.evtrading.swp391.dto.LoginRequestDTO;
+import com.evtrading.swp391.dto.RegisterRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
@@ -19,14 +20,12 @@ public class UserController {
 
     // Lấy danh sách tất cả user
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
 
     // Lấy thông tin user theo id
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or principal.username == @userRepository.findById(#id).get().username")
     public ResponseEntity<User> getUserById(@PathVariable Integer id) {
         Optional<User> user = userService.getUserById(id);
         return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -34,14 +33,12 @@ public class UserController {
 
     // Tạo mới user
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
 
     // Cập nhật user
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User userDetails) {
         User updated = userService.updateUser(id, userDetails);
         if (updated != null)
@@ -51,7 +48,6 @@ public class UserController {
 
     // Xóa user
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
@@ -59,10 +55,35 @@ public class UserController {
 
     ///////////////////////////////////////////////////////////////////////////////////
 
+    // public api for user
+
+    //api login
+    @PostMapping("/login")
+    public ResponseEntity<User> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+        return userService.login(loginRequestDTO.getUsername(), loginRequestDTO.getPassword())
+                .map(ResponseEntity::ok)
+                //đăng nhập thành công trả về 200 OK
+                .orElseGet(() -> ResponseEntity.status(401).build());
+                //đăng nhập thất bại trả về 401 Unauthorized
+
+    }
+
+    //api register
+    @PostMapping("/register")
+    public ResponseEntity<User> register(@RequestBody RegisterRequestDTO registerRequestDTO) {
+        User user = userService.register(registerRequestDTO);
+        if (user != null) {
+            return ResponseEntity.status(201).body(user);
+            //đăng ký thành công trả về 201 Created
+        }
+        return ResponseEntity.badRequest().build();
+        //đăng ký thất bại trả về 400 Bad Request
+    }
+
+
     //admin api
     // Disable user by id (chỉ các member và moderator)
     @PostMapping("/{id}/disable")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> disableUser(@PathVariable Integer id) {
         Optional<User> opt = userService.getUserById(id);
         if (opt.isEmpty()) {
@@ -87,7 +108,6 @@ public class UserController {
 
     // Approve user by id (only if user is Pending and role is Member) 
     @PostMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> approveUser(@PathVariable Integer id) {
         Optional<User> opt = userService.getUserById(id);
         if (opt.isEmpty()) {

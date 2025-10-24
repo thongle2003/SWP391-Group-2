@@ -1,16 +1,71 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import apiService from '../services/apiService'
 import './Header.css'
 
 function Header() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
-  const [isLoggedIn, setIsLoggedIn] = useState(false) // For demo purposes
+  const [user, setUser] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
+
+  useEffect(() => {
+    const checkUser = () => {
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser))
+        } catch (error) {
+          console.error('Error parsing user data:', error)
+        }
+      } else {
+        setUser(null)
+      }
+    }
+
+    checkUser()
+    window.addEventListener('storage', checkUser)
+    const interval = setInterval(checkUser, 1000)
+    
+    return () => {
+      window.removeEventListener('storage', checkUser)
+      clearInterval(interval)
+    }
+  }, [])
 
   const handleSearch = (e) => {
     e.preventDefault()
-    console.log('Tìm kiếm:', searchQuery)
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
+    } else {
+      navigate('/search')
+    }
+  }
+
+  const handleLogout = async () => {
+    if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
+      try {
+        // Gọi API logout
+        await apiService.logout()
+        
+        // Cập nhật UI
+        setUser(null)
+        setShowUserMenu(false)
+        
+        // Trigger storage event để các component khác cập nhật
+        window.dispatchEvent(new Event('storage'))
+        
+        alert('Đăng xuất thành công!')
+        navigate('/')
+      } catch (error) {
+        console.error('Logout error:', error)
+        // Vẫn clear UI và redirect dù API lỗi
+        setUser(null)
+        setShowUserMenu(false)
+        alert('Đã đăng xuất!')
+        navigate('/')
+      }
+    }
   }
 
   return (
@@ -22,10 +77,10 @@ function Header() {
 
           {/* Menu Navigation */}
           <nav className="main-nav">
-            <a href="#" className="nav-link">Mua sản phẩm</a>
-            <a href="#" className="nav-link">Bán sản phẩm</a>
+            <a onClick={() => navigate('/buy')} className="nav-link">Mua sản phẩm</a>
+            <a onClick={() => navigate('/sell')} className="nav-link">Bán sản phẩm</a>
             <a href="#" className="nav-link">Liên hệ</a>
-            <a href="#" className="nav-link">Về chúng tôi</a>
+            <a onClick={() => navigate('/about')} className="nav-link">Về chúng tôi</a>
           </nav>
 
           {/* Search Bar */}
@@ -47,7 +102,7 @@ function Header() {
 
           {/* Auth Buttons - Right */}
           <div className="auth-buttons">
-            {!isLoggedIn ? (
+            {!user ? (
               <>
                 <button className="btn-login" onClick={() => navigate('/login')}>
                   Đăng nhập
@@ -59,38 +114,32 @@ function Header() {
             ) : (
               <div className="user-menu-container">
                 <button 
-                  className="user-avatar-btn" 
+                  className="btn-member" 
                   onClick={() => setShowUserMenu(!showUserMenu)}
                 >
-                  <img src="https://via.placeholder.com/40" alt="User" />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  Hello, {user.username || user.userName || user.name || 'User'}
                 </button>
+                
                 {showUserMenu && (
                   <div className="user-dropdown">
-                    <div className="dropdown-item" onClick={() => { navigate('/profile'); setShowUserMenu(false); }}>
-                      <span>👤</span> Thông tin cá nhân
+                    <div className="dropdown-item" onClick={() => { navigate('/user-profile'); setShowUserMenu(false); }}>
+                      <span>👤</span> Tài Khoản Của Tôi
                     </div>
                     <div className="dropdown-item" onClick={() => { navigate('/my-orders'); setShowUserMenu(false); }}>
-                      <span>📦</span> Đơn hàng của tôi
-                    </div>
-                    <div className="dropdown-item" onClick={() => { navigate('/settings'); setShowUserMenu(false); }}>
-                      <span>⚙️</span> Cài đặt
+                      <span>📦</span> Đơn Đã Mua
                     </div>
                     <div className="dropdown-divider"></div>
-                    <div className="dropdown-item" onClick={() => { setIsLoggedIn(false); setShowUserMenu(false); }}>
-                      <span>🚪</span> Đăng xuất
+                    <div className="dropdown-item" onClick={handleLogout}>
+                      <span>🚪</span> Đăng Xuất
                     </div>
                   </div>
                 )}
               </div>
             )}
-            {/* Toggle demo login state */}
-            <button 
-              className="btn-demo-toggle" 
-              onClick={() => setIsLoggedIn(!isLoggedIn)}
-              style={{ marginLeft: '10px', fontSize: '12px', padding: '5px 10px' }}
-            >
-              {isLoggedIn ? '👤 Thành viên' : '👤 Thành viên'}
-            </button>
           </div>
         </div>
       </div>
