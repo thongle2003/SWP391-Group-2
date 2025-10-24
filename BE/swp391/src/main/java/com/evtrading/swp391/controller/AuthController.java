@@ -6,7 +6,7 @@ import com.evtrading.swp391.dto.RegisterRequestDTO;
 import com.evtrading.swp391.dto.SocialLoginRequestDTO;
 import com.evtrading.swp391.entity.User;
 import com.evtrading.swp391.repository.UserRepository;
-import com.evtrading.swp391.security.JwtUtils;
+import com.evtrading.swp391.security.JwtProvider;
 import com.evtrading.swp391.service.SocialAuthService;
 import com.evtrading.swp391.service.UserService;
 
@@ -46,10 +46,10 @@ public class AuthController {
     UserService userService;
 
     /**
-     * JwtUtils cung cấp các phương thức để tạo và xác thực JWT token
+     * JwtProvider cung cấp các phương thức để tạo và xác thực JWT token
      */
     @Autowired
-    JwtUtils jwtUtils;
+    JwtProvider jwtProvider;
 
     @Autowired
     UserRepository userRepository;
@@ -90,14 +90,19 @@ public class AuthController {
 
             // Lưu context và tạo token
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = jwtUtils.generateJwtToken(authentication);
 
             // Lấy thông tin chi tiết của người dùng
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found after authentication"));
 
-            // Tạo response chứa token, thông tin người dùng và tokenType
+            // Tạo JWT bằng JwtProvider
+            String jwt = jwtProvider.createToken(
+                user.getUserID(),
+                user.getEmail(),
+                user.getRole().getRoleName()
+            );
+
             AuthResponseDTO response = new AuthResponseDTO(
                     jwt,
                     user.getUserID(),
