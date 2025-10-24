@@ -19,6 +19,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/categories")
 @Tag(name = "Categories", description = "API để quản lý danh mục")
@@ -38,9 +40,11 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+
+    @Operation(summary = "Lấy danh sách danh mục", description = "Lấy tất cả danh mục")
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
-        List<Category> categories = categoryService.findAll();
+    public ResponseEntity<List<CategoryDTO>> getAllCategories() {
+        List<CategoryDTO> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
 }

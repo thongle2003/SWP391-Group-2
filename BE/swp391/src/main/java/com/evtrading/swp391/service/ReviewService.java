@@ -68,4 +68,51 @@ public class ReviewService {
         if (l.isEmpty()) return List.of();
         return reviewRepository.findByListing(l.get());
     }
+
+    /**
+     * Lấy feedback tổng quan cho một seller:
+     * - Lấy tất cả listing của seller
+     * - Với mỗi listing lấy danh sách review, tính average và số lượng, và lấy comments
+     * - Tính tổng số review và điểm trung bình tổng quát cho seller
+     */
+    public com.evtrading.swp391.dto.SellerFeedbackDTO getSellerFeedback(Integer sellerId) {
+        com.evtrading.swp391.dto.SellerFeedbackDTO result = new com.evtrading.swp391.dto.SellerFeedbackDTO();
+        result.setSellerId(sellerId);
+
+        // Lấy tất cả listing của seller (không phân trang vì dùng cho dashboard)
+        java.util.List<com.evtrading.swp391.entity.Listing> listings = listingRepository.findAll().stream()
+                .filter(l -> l.getUser() != null && l.getUser().getUserID().equals(sellerId))
+                .collect(Collectors.toList());
+
+        java.util.List<com.evtrading.swp391.dto.SellerFeedbackDTO.ListingFeedback> listingFeedbacks = new java.util.ArrayList<>();
+        long totalReviews = 0L;
+        double weightedSum = 0.0;
+
+        for (com.evtrading.swp391.entity.Listing li : listings) {
+            java.util.List<Review> reviews = reviewRepository.findByListing(li);
+            long count = reviews.size();
+            double avg = 0.0;
+            java.util.List<String> comments = new java.util.ArrayList<>();
+            if (count > 0) {
+                avg = reviews.stream().collect(Collectors.summarizingDouble(Review::getRating)).getAverage();
+                reviews.forEach(r -> { if (r.getComment() != null) comments.add(r.getComment()); });
+            }
+            com.evtrading.swp391.dto.SellerFeedbackDTO.ListingFeedback lf = new com.evtrading.swp391.dto.SellerFeedbackDTO.ListingFeedback();
+            lf.setListingId(li.getListingID());
+            lf.setTitle(li.getTitle());
+            lf.setAverageRating(avg);
+            lf.setReviewCount((int) count);
+            lf.setComments(comments);
+            listingFeedbacks.add(lf);
+
+            totalReviews += count;
+            weightedSum += avg * count;
+        }
+
+        result.setListings(listingFeedbacks);
+        result.setTotalReviews(totalReviews);
+        double sellerAvg = totalReviews > 0 ? weightedSum / totalReviews : 0.0;
+        result.setAverageRating(sellerAvg);
+        return result;
+    }
 }

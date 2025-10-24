@@ -9,6 +9,9 @@ import com.evtrading.swp391.dto.BrandDTO;
 import com.evtrading.swp391.entity.Brand;
 import com.evtrading.swp391.repository.BrandRepository;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class BrandService {
 
@@ -25,7 +28,13 @@ public class BrandService {
         response.setBrandName(savedBrand.getBrandName());
         return response;
     }
-    public List<Brand> findAll() {
-        return brandRepository.findAll();
+
+    public List<BrandDTO> getAllBrands() {
+        return brandRepository.findAll().stream().map(brand -> {
+            BrandDTO dto = new BrandDTO();
+            dto.setBrandId(brand.getBrandID());
+            dto.setBrandName(brand.getBrandName());
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

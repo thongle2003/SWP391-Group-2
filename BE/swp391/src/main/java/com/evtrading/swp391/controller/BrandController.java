@@ -19,6 +19,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/brands")
 @Tag(name = "Brands", description = "API để quản lý thương hiệu")
@@ -38,9 +40,12 @@ public class BrandController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+
+    @Operation(summary = "Lấy danh sách thương hiệu", description = "Lấy tất cả thương hiệu")
     @GetMapping
-    public ResponseEntity<List<Brand>> getAllBrands() {
-        List<Brand> brands = brandService.findAll();
+    public ResponseEntity<List<BrandDTO>> getAllBrands() {
+        List<BrandDTO> brands = brandService.getAllBrands();
         return ResponseEntity.ok(brands);
     }
+
 }

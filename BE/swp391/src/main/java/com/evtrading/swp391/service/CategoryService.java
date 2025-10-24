@@ -9,6 +9,9 @@ import com.evtrading.swp391.dto.CategoryDTO;
 import com.evtrading.swp391.entity.Category;
 import com.evtrading.swp391.repository.CategoryRepository;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class CategoryService {
 
@@ -25,7 +28,13 @@ public class CategoryService {
         response.setCategoryName(savedCategory.getCategoryName());
         return response;
     }
-    public List<Category> findAll() {
-        return categoryRepository.findAll();
+
+    public List<CategoryDTO> getAllCategories() {
+        return categoryRepository.findAll().stream().map(category -> {
+            CategoryDTO dto = new CategoryDTO();
+            dto.setCategoryId(category.getCategoryID());
+            dto.setCategoryName(category.getCategoryName());
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

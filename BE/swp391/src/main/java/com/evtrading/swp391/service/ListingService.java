@@ -1,6 +1,8 @@
 package com.evtrading.swp391.service;
+
 import com.evtrading.swp391.dto.*;
 import com.evtrading.swp391.entity.*;
+import com.evtrading.swp391.mapper.ListingMapper;
 import com.evtrading.swp391.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,8 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import com.evtrading.swp391.repository.specification.ListingSpecification;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,12 +41,24 @@ public class ListingService {
     
     @Autowired
     private ListingImageRepository listingImageRepository;
+    
+    @Autowired
+    private CloudinaryService cloudinaryService;
+    
+    @Autowired
+    private ListingMapper listingMapper;
+
+    @Autowired
+    private SpamFilterService spamFilterService;
+
+    @Autowired
+    private ComplaintRepository complaintRepository;
 
     /**
      * Tạo một bài đăng mới
      */
     @Transactional
-    public ListingResponseDTO createListing(ListingRequestDTO dto, String username) {
+    public ListingResponseDTO createListing(ListingRequestDTO dto, List<MultipartFile> images, String username) {
         // 1. Lấy thông tin người dùng
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
@@ -89,14 +102,34 @@ public class ListingService {
             listing.setBattery(battery);
         }
 
-        // 5. Lưu Listing
+        // Prepare image URLs
+        List<String> imageUrls = images != null ? cloudinaryService.uploadImages(images) : dto.getImageURLs();
+
+        // Run spam filter BEFORE saving final listing
+        SpamFilterService.SpamResult spamResult = spamFilterService.check(listing, imageUrls);
+        if (spamResult.flagged) {
+            // Mark listing as flagged/pending review
+            listing.setStatus("FLAGGED");
+        }
+
+        // 5. Lưu Listing (even if flagged)
         Listing savedListing = listingRepository.save(listing);
 
-        // 6. Lưu hình ảnh
-        List<ListingImage> images = saveListingImages(savedListing, dto.getImageURLs(), dto.getPrimaryImageIndex());
+        // Save images
+        List<ListingImage> listingImages = saveListingImages(savedListing, imageUrls, dto.getPrimaryImageIndex());
 
-        // 7. Chuyển đổi và trả về response
-        return convertToListingResponseDTO(savedListing, images);
+        // If flagged, create automated complaint for moderators to review
+        if (spamResult.flagged) {
+            Complaint c = new Complaint();
+            c.setUser(user); // reporter is system; using the listing owner as reference here might be ambiguous
+            c.setListing(savedListing);
+            c.setContent("Automated spam detection: " + String.join("; ", spamResult.reasons));
+            c.setStatus("Pending");
+            c.setCreatedAt(new Date());
+            complaintRepository.save(c);
+        }
+
+        return convertToListingResponseDTO(savedListing, listingImages);
     }
 
     /**
@@ -183,38 +216,53 @@ public class ListingService {
     }
 
     /**
-     * Lấy danh sách bài đăng theo các tiêu chí (đã sửa lại bằng Specification)
+     * Lấy danh sách bài đăng theo các tiêu chí
+     * Mặc định chỉ lấy các bài đăng đã được approve (ACTIVE)
      */
-    public Page<ListingResponseDTO> getListings(String status, Integer userId,
-                                                Integer categoryId, Integer brandId,
-                                                Pageable pageable, boolean isModerator) {
-
-        // 1. Bắt đầu với một Specification trống (luôn đúng)
-        Specification<Listing> spec = Specification.where(null);
-
-        // 2. Người dùng thường chỉ thấy bài đăng 'APPROVED'
-        // Moderator/Admin có thể thấy các trạng thái khác nếu được chỉ định
-        if (!isModerator) {
-            spec = spec.and(ListingSpecification.hasStatus("APPROVED"));
-        } else if (status != null) {
-            spec = spec.and(ListingSpecification.hasStatus(status));
+    public Page<ListingResponseDTO> getListings(String status, Integer userId, 
+                                         Integer categoryId, Integer brandId, 
+                                         Pageable pageable, boolean isModerator) {
+        Page<Listing> listingsPage;
+        
+        // Nếu là admin/moderator xem bài đăng cụ thể theo status
+        if (status != null && isModerator) {
+            listingsPage = listingRepository.findByStatus(status, pageable);
+        } 
+        // Nếu người dùng muốn xem bài đăng của họ
+        else if (userId != null) {
+            if (isModerator) {
+                // Moderator có thể xem tất cả bài đăng của user
+                listingsPage = listingRepository.findByUserUserID(userId, pageable);
+            } else {
+                // User thường chỉ xem được bài đăng ACTIVE của người khác hoặc tất cả bài đăng của chính họ
+                listingsPage = listingRepository.findByUserUserID(userId, pageable);
+            }
         }
-
-        // 3. Nối thêm các điều kiện lọc nếu chúng được cung cấp
-        if (userId != null) {
-            spec = spec.and(ListingSpecification.hasUser(userId));
+        // Lọc theo danh mục 
+        else if (categoryId != null) {
+            if (isModerator && status != null) {
+                listingsPage = listingRepository.findByCategoryCategoryIDAndStatus(categoryId, status, pageable);
+            } else {
+                listingsPage = listingRepository.findByCategoryCategoryIDAndStatus(categoryId, "ACTIVE", pageable);
+            }
         }
-        if (categoryId != null) {
-            spec = spec.and(ListingSpecification.hasCategory(categoryId));
+        // Lọc theo thương hiệu
+        else if (brandId != null) {
+            if (isModerator && status != null) {
+                listingsPage = listingRepository.findByBrandBrandIDAndStatus(brandId, status, pageable);
+            } else {
+                listingsPage = listingRepository.findByBrandBrandIDAndStatus(brandId, "ACTIVE", pageable);
+            }
         }
-        if (brandId != null) {
-            spec = spec.and(ListingSpecification.hasBrand(brandId));
+        // Mặc định chỉ lấy các bài đăng ACTIVE
+        else {
+            if (isModerator && status != null) {
+                listingsPage = listingRepository.findByStatus(status, pageable);
+            } else {
+                listingsPage = listingRepository.findByStatus("ACTIVE", pageable);
+            }
         }
-
-        // 4. Thực thi truy vấn với tất cả các điều kiện đã được kết hợp
-        Page<Listing> listingsPage = listingRepository.findAll(spec, pageable);
-
-        // 5. Chuyển đổi kết quả sang DTO và trả về (logic này không đổi)
+        
         return listingsPage.map(listing -> {
             List<ListingImage> images = listingImageRepository.findByListingListingID(listing.getListingID());
             return convertToListingResponseDTO(listing, images);
@@ -368,79 +416,6 @@ public class ListingService {
     }
     
     private ListingResponseDTO convertToListingResponseDTO(Listing listing, List<ListingImage> images) {
-        ListingResponseDTO dto = new ListingResponseDTO();
-        
-        // Thông tin cơ bản
-        dto.setId(listing.getListingID());
-        dto.setTitle(listing.getTitle());
-        dto.setDescription(listing.getDescription());
-        dto.setPrice(listing.getPrice());
-        dto.setStatus(listing.getStatus());
-        dto.setCreatedAt(listing.getCreatedAt());
-        dto.setStartDate(listing.getStartDate());
-        dto.setExpiryDate(listing.getExpiryDate());
-        
-        // Thông tin người bán
-        UserDTO sellerDto = new UserDTO();
-        sellerDto.setId(listing.getUser().getUserID());
-        sellerDto.setUsername(listing.getUser().getUsername());
-        sellerDto.setEmail(listing.getUser().getEmail());
-        sellerDto.setRole(listing.getUser().getRole().getRoleName());
-        sellerDto.setStatus(listing.getUser().getStatus());
-        sellerDto.setCreatedAt(listing.getUser().getCreatedAt());
-        dto.setSeller(sellerDto);
-        
-        // Thông tin danh mục và thương hiệu
-        dto.setCategoryName(listing.getCategory().getCategoryName());
-        dto.setBrandName(listing.getBrand().getBrandName());
-        
-        // Thông tin sản phẩm
-        if (listing.getVehicle() != null) {
-            VehicleDTO vehicleDTO = new VehicleDTO();
-            vehicleDTO.setVehicleId(listing.getVehicle().getVehicleID());
-            vehicleDTO.setModel(listing.getVehicle().getModel());
-            vehicleDTO.setColor(listing.getVehicle().getColor());
-            vehicleDTO.setYear(listing.getVehicle().getYear());
-            vehicleDTO.setPrice(listing.getVehicle().getPrice());
-            vehicleDTO.setCondition(listing.getVehicle().getCondition());
-            
-            dto.setProduct(vehicleDTO);
-        } else if (listing.getBattery() != null) {
-            BatteryDTO batteryDTO = new BatteryDTO();
-            batteryDTO.setBatteryId(listing.getBattery().getBatteryID());
-            batteryDTO.setCapacity(listing.getBattery().getCapacity());
-            batteryDTO.setVoltage(listing.getBattery().getVoltage());
-            batteryDTO.setCycleCount(listing.getBattery().getCycleCount());
-            batteryDTO.setPrice(listing.getBattery().getPrice());
-            batteryDTO.setCondition(listing.getBattery().getCondition());
-            
-            dto.setProduct(batteryDTO);
-        }
-        
-        // Thông tin hình ảnh
-        if (images != null && !images.isEmpty()) {
-            List<ListingImageDTO> imageDTOs = images.stream().map(image -> {
-                ListingImageDTO imageDTO = new ListingImageDTO();
-                imageDTO.setId(image.getImageID());
-                imageDTO.setUrl(image.getImageURL());
-                imageDTO.setIsPrimary(image.getIsPrimary());
-                return imageDTO;
-            }).collect(Collectors.toList());
-            
-            dto.setImages(imageDTOs);
-            
-            // Tìm ảnh chính
-            images.stream()
-                  .filter(ListingImage::getIsPrimary)
-                  .findFirst()
-                  .ifPresent(primaryImage -> dto.setPrimaryImageUrl(primaryImage.getImageURL()));
-            
-            // Nếu không có ảnh chính, lấy ảnh đầu tiên
-            if (dto.getPrimaryImageUrl() == null && !images.isEmpty()) {
-                dto.setPrimaryImageUrl(images.get(0).getImageURL());
-            }
-        }
-        
-        return dto;
+        return listingMapper.toDto(listing, images);
     }
 }

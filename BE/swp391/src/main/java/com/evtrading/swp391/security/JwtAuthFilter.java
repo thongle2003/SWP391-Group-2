@@ -30,7 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * Tiện ích để xử lý JWT (tạo, xác thực, trích xuất thông tin)
      */
     @Autowired
-    private JwtUtils jwtUtils;
+    private JwtProvider jwtProvider;
 
     /**
      * Service để tải thông tin người dùng từ database dựa vào username
@@ -49,39 +49,44 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * Luồng xử lý:
      * 1. Trích xuất JWT từ header Authorization
      * 2. Nếu có JWT và hợp lệ:
-     *    - Lấy username từ JWT
-     *    - Tải thông tin chi tiết về người dùng từ database
-     *    - Tạo đối tượng xác thực (Authentication) với thông tin người dùng và quyền hạn
-     *    - Lưu thông tin xác thực vào SecurityContext để các filter tiếp theo sử dụng
+     * - Lấy username từ JWT
+     * - Tải thông tin chi tiết về người dùng từ database
+     * - Tạo đối tượng xác thực (Authentication) với thông tin người dùng và quyền
+     * hạn
+     * - Lưu thông tin xác thực vào SecurityContext để các filter tiếp theo sử dụng
      * 3. Gọi filter tiếp theo trong chuỗi
      * 
-     * @param request  HTTP request từ client
-     * @param response HTTP response sẽ trả về client
+     * @param request     HTTP request từ client
+     * @param response    HTTP response sẽ trả về client
      * @param filterChain chuỗi filter còn lại cần được xử lý
      */
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, 
+            @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+        
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        
         try {
             // Trích xuất JWT từ header Authorization
             String jwt = parseJwt(request);
-            
+
             // Nếu JWT tồn tại và hợp lệ
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+            if (jwt != null && jwtProvider.validateJwtToken(jwt)) {
                 // Lấy username từ JWT
-                String username = jwtUtils.getUserNameFromJwtToken(jwt);
+                String username = jwtProvider.getUserNameFromJwtToken(jwt);
 
                 // Tải thông tin người dùng từ database dựa vào username
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                
+
                 // Tạo đối tượng xác thực (không cần mật khẩu vì JWT đã xác thực rồi)
                 // Tham số thứ 3 là danh sách quyền (authorities) của người dùng
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,  // Thông tin người dùng
-                                null,         // Không cần mật khẩu
-                                userDetails.getAuthorities());  // Quyền của người dùng
-                
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, // Thông tin người dùng
+                        null, // Không cần mật khẩu
+                        userDetails.getAuthorities()); // Quyền của người dùng
+
                 // Thêm các chi tiết về request hiện tại (IP, session...)
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
@@ -90,12 +95,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            // Ghi log nếu có lỗi xảy ra trong quá trình xác thực
-            logger.error("Không thể xác thực người dùng: {}", e.getMessage());
+            logger.error("JWT validation error", e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         // Gọi filter tiếp theo trong chuỗi
-        // Nếu xác thực thành công, các filter tiếp theo sẽ thấy SecurityContext đã được thiết lập
+        // Nếu xác thực thành công, các filter tiếp theo sẽ thấy SecurityContext đã được
+        // thiết lập
         // Nếu không, các filter tiếp theo sẽ xử lý request như là chưa xác thực
         filterChain.doFilter(request, response);
     }
