@@ -1,10 +1,13 @@
 package com.evtrading.swp391.service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.evtrading.swp391.dto.CategoryDTO;
 import com.evtrading.swp391.entity.Category;
 import com.evtrading.swp391.repository.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class CategoryService {
@@ -21,5 +24,8 @@ public class CategoryService {
         response.setCategoryId(savedCategory.getCategoryID());
         response.setCategoryName(savedCategory.getCategoryName());
         return response;
+    }
+    public List<Category> findAll() {
+        return categoryRepository.findAll();
     }
 }

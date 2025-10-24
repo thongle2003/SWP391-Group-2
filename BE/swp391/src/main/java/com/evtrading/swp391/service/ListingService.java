@@ -1,5 +1,4 @@
 package com.evtrading.swp391.service;
-
 import com.evtrading.swp391.dto.*;
 import com.evtrading.swp391.entity.*;
 import com.evtrading.swp391.repository.*;
@@ -9,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import com.evtrading.swp391.repository.specification.ListingSpecification;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -182,53 +183,38 @@ public class ListingService {
     }
 
     /**
-     * Lấy danh sách bài đăng theo các tiêu chí
-     * Mặc định chỉ lấy các bài đăng đã được approve (ACTIVE)
+     * Lấy danh sách bài đăng theo các tiêu chí (đã sửa lại bằng Specification)
      */
-    public Page<ListingResponseDTO> getListings(String status, Integer userId, 
-                                         Integer categoryId, Integer brandId, 
-                                         Pageable pageable, boolean isModerator) {
-        Page<Listing> listingsPage;
-        
-        // Nếu là admin/moderator xem bài đăng cụ thể theo status
-        if (status != null && isModerator) {
-            listingsPage = listingRepository.findByStatus(status, pageable);
-        } 
-        // Nếu người dùng muốn xem bài đăng của họ
-        else if (userId != null) {
-            if (isModerator) {
-                // Moderator có thể xem tất cả bài đăng của user
-                listingsPage = listingRepository.findByUserUserID(userId, pageable);
-            } else {
-                // User thường chỉ xem được bài đăng ACTIVE của người khác hoặc tất cả bài đăng của chính họ
-                listingsPage = listingRepository.findByUserUserID(userId, pageable);
-            }
+    public Page<ListingResponseDTO> getListings(String status, Integer userId,
+                                                Integer categoryId, Integer brandId,
+                                                Pageable pageable, boolean isModerator) {
+
+        // 1. Bắt đầu với một Specification trống (luôn đúng)
+        Specification<Listing> spec = Specification.where(null);
+
+        // 2. Người dùng thường chỉ thấy bài đăng 'APPROVED'
+        // Moderator/Admin có thể thấy các trạng thái khác nếu được chỉ định
+        if (!isModerator) {
+            spec = spec.and(ListingSpecification.hasStatus("APPROVED"));
+        } else if (status != null) {
+            spec = spec.and(ListingSpecification.hasStatus(status));
         }
-        // Lọc theo danh mục 
-        else if (categoryId != null) {
-            if (isModerator && status != null) {
-                listingsPage = listingRepository.findByCategoryCategoryIDAndStatus(categoryId, status, pageable);
-            } else {
-                listingsPage = listingRepository.findByCategoryCategoryIDAndStatus(categoryId, "ACTIVE", pageable);
-            }
+
+        // 3. Nối thêm các điều kiện lọc nếu chúng được cung cấp
+        if (userId != null) {
+            spec = spec.and(ListingSpecification.hasUser(userId));
         }
-        // Lọc theo thương hiệu
-        else if (brandId != null) {
-            if (isModerator && status != null) {
-                listingsPage = listingRepository.findByBrandBrandIDAndStatus(brandId, status, pageable);
-            } else {
-                listingsPage = listingRepository.findByBrandBrandIDAndStatus(brandId, "ACTIVE", pageable);
-            }
+        if (categoryId != null) {
+            spec = spec.and(ListingSpecification.hasCategory(categoryId));
         }
-        // Mặc định chỉ lấy các bài đăng ACTIVE
-        else {
-            if (isModerator && status != null) {
-                listingsPage = listingRepository.findByStatus(status, pageable);
-            } else {
-                listingsPage = listingRepository.findByStatus("ACTIVE", pageable);
-            }
+        if (brandId != null) {
+            spec = spec.and(ListingSpecification.hasBrand(brandId));
         }
-        
+
+        // 4. Thực thi truy vấn với tất cả các điều kiện đã được kết hợp
+        Page<Listing> listingsPage = listingRepository.findAll(spec, pageable);
+
+        // 5. Chuyển đổi kết quả sang DTO và trả về (logic này không đổi)
         return listingsPage.map(listing -> {
             List<ListingImage> images = listingImageRepository.findByListingListingID(listing.getListingID());
             return convertToListingResponseDTO(listing, images);
