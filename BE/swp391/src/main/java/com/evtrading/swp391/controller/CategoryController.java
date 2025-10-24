@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.evtrading.swp391.dto.CategoryDTO;
-import com.evtrading.swp391.entity.Category;
 import com.evtrading.swp391.service.CategoryService;
 
 import io.swagger.v3.oas.annotations.Operation;
