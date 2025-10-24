@@ -91,7 +91,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         // Tạm thời dùng NoOpPasswordEncoder để giữ cơ chế mật khẩu plaintext
         // CẢNH BÁO: Đây là cấu hình không an toàn, chỉ nên dùng trong development
-        return new BCryptPasswordEncoder();
+        return NoOpPasswordEncoder.getInstance();
 
         /*
         // Đây là cách đúng để mã hóa mật khẩu cho môi trường production

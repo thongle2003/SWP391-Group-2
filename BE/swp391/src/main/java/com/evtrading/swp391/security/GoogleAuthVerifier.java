@@ -18,7 +18,7 @@ import java.util.Collections;
 
 @Service
 public class GoogleAuthVerifier {
-    @Value("${security.oauth2.google.client-id:}")
+    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String clientId;
 
       @Autowired

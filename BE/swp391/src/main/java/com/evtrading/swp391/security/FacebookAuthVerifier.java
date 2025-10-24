@@ -8,9 +8,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 @Service
 public class FacebookAuthVerifier {
-@Value("${security.oauth2.facebook.app-id}")
+    @Value("${spring.security.oauth2.client.registration.facebook.client-id}")
     private String appId;
-    @Value("${security.oauth2.facebook.app-secret}")
+    @Value("${spring.security.oauth2.client.registration.facebook.client-secret}")
     private String appSecret;
 
     private final RestTemplate rest = new RestTemplate();
