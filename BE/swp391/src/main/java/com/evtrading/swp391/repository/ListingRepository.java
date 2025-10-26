@@ -16,4 +16,13 @@ public interface ListingRepository extends JpaRepository<Listing, Integer>, JpaS
     Page<Listing> findByBrandBrandID(Integer brandId, Pageable pageable);
     Page<Listing> findByCategoryCategoryIDAndStatus(Integer categoryId, String status, Pageable pageable);
     Page<Listing> findByBrandBrandIDAndStatus(Integer brandId, String status, Pageable pageable);
+    
+    // Count titles (case-insensitive) to detect duplicate titles
+    long countByTitleIgnoreCase(String title);
+
+    // Count listings created by user after a given time (for rate limiting)
+    long countByUserUserIDAndCreatedAtAfter(Integer userId, java.util.Date after);
+
+    // Find all listings in a category (used for price anomaly checks)
+    java.util.List<Listing> findAllByCategoryCategoryID(Integer categoryId);
 }

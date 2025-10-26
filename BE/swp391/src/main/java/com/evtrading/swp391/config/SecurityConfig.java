@@ -1,24 +1,27 @@
 package com.evtrading.swp391.config;
 
+import com.evtrading.swp391.security.JwtAuthFilter;
+import com.evtrading.swp391.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
-import com.evtrading.swp391.security.JwtAuthFilter;
-import com.evtrading.swp391.service.UserDetailsServiceImpl;
 
 /**
  * Cấu hình chính của Spring Security cho ứng dụng
@@ -104,30 +107,23 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.sessionManagement(session -> 
+            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http
-                .cors(Customizer.withDefaults()) //SỬA ĐỔI 1: Kích hoạt CORS ngay từ đầu chuỗi bộ lọc
-                .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Không dùng session
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //SỬA ĐỔI 2: Cho phép tất cả request OPTIONS đi qua mà không cần xác thực
-                        // === SỬA ĐỔI QUAN TRỌNG NHẤT NẰM Ở ĐÂY ===
-                        // Liệt kê trực tiếp các đường dẫn công khai
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html" // Thêm cả file html này cho chắc
-                        ).permitAll() // Cho phép tất cả truy cập vào các đường dẫn trên
-
-                        // Tất cả các request còn lại phải được xác thực
-                        .anyRequest().authenticated()
-                );
-
-        // Thêm các provider và filter của bạn
+        http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(Customizer.withDefaults());
+        
+        http.authorizeHttpRequests(auth -> 
+            auth
+                .requestMatchers("/api/auth/**").permitAll()  // Cho phép tất cả request tới /api/auth/**
+                .requestMatchers("/api/auth/social").permitAll() // Đảm bảo endpoint social login được permit
+                .requestMatchers(SecurityPaths.publicEndpoints()).permitAll()
+                .anyRequest().authenticated()
+        );
+        
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-
+        
         return http.build();
     }
 }
