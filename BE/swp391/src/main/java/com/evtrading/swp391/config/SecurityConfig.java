@@ -105,25 +105,34 @@ public class SecurityConfig {
      * Cấu hình bảo mật chính cho ứng dụng
      * Định nghĩa các quy tắc truy cập endpoints, filter chain, xác thực...
      */
+    // PUBLIC ENDPOINTS: KHÔNG CẦN JWT
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.sessionManagement(session -> 
-            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+    public SecurityFilterChain publicFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher(request -> SecurityPaths.isPublicPath(request.getServletPath()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll()
+            );
+        return http.build();
+    }
 
-        http.csrf(AbstractHttpConfigurer::disable);
-        http.cors(Customizer.withDefaults());
-        
-        http.authorizeHttpRequests(auth -> 
-            auth
-                .requestMatchers("/api/auth/**").permitAll()  // Cho phép tất cả request tới /api/auth/**
-                .requestMatchers("/api/auth/social").permitAll() // Đảm bảo endpoint social login được permit
-                .requestMatchers(SecurityPaths.publicEndpoints()).permitAll()
+    // PROTECTED ENDPOINTS: CẦN JWT
+    @Bean
+    public SecurityFilterChain protectedFilterChain(HttpSecurity http) throws Exception {
+        http
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/social").permitAll()
                 .anyRequest().authenticated()
-        );
-        
-        http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-        
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }
