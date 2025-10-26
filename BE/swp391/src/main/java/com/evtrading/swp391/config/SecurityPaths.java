@@ -15,6 +15,8 @@ public final class SecurityPaths {
             "/api/auth/**",
             "/swagger-ui/**",
             "/v3/api-docs/**"
+        // DocuSeal webhook callback (no auth; verified by header secret)
+        "/api/contracts/webhook"
     };
 
     private SecurityPaths() {
