@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import apiService from '../services/apiService'
 import './Header.css'
 
 function Header() {
@@ -41,6 +42,30 @@ function Header() {
     }
   }
 
+
+  const handleLogout = async () => {
+    if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
+      try {
+        // Gọi API logout
+        await apiService.logout()
+        
+        // Cập nhật UI
+        setUser(null)
+        setShowUserMenu(false)
+        
+        // Trigger storage event để các component khác cập nhật
+        window.dispatchEvent(new Event('storage'))
+        
+        alert('Đăng xuất thành công!')
+        navigate('/')
+      } catch (error) {
+        console.error('Logout error:', error)
+        // Vẫn clear UI và redirect dù API lỗi
+        setUser(null)
+        setShowUserMenu(false)
+        alert('Đã đăng xuất!')
+        navigate('/')
+      }
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
       // Xóa toàn bộ data của user
@@ -56,6 +81,7 @@ function Header() {
       setShowUserMenu(false)
       alert('Đăng xuất thành công!')
       navigate('/')
+
     }
   }
 
@@ -112,7 +138,11 @@ function Header() {
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
+
+                  Hello, {user.username || user.userName || user.name || 'User'}
+
                   Hello, {user.username}
+
                 </button>
                 
                 {showUserMenu && (

@@ -34,6 +34,7 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.3);
   z-index: 1;
+
 }
 
 /* Back to Home Button */
@@ -70,6 +71,7 @@
 
 .back-home-btn span {
   font-weight: 700;
+=======
 }
 
 .website-branding {
