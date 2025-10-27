@@ -2,7 +2,10 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import backgroundVideo from '../assets/33vfxVliVS7mnZQ8o2LDBHzOqvL.mp4'
+
 import apiService from '../services/apiService'
+import api from '../services/api'
+
 import './Login.css'
 
 function Login() {
@@ -28,9 +31,15 @@ function Login() {
     try {
       // Call API login - apiService sẽ tự động lưu token và user data
       const response = await apiService.login({
+
+    setLoading(true)
+
+    try {
+      const response = await api.post('/users/login', {
         username,
         password
       })
+
 
       // Kiểm tra response có token
       if (response && response.token) {
@@ -50,6 +59,19 @@ function Login() {
     } catch (err) {
       console.error('Login error:', err)
       setError(err.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
+
+      // Lưu thông tin user vào localStorage
+      if (response.data) {
+        localStorage.setItem('user', JSON.stringify(response.data))
+        localStorage.setItem('isLoggedIn', 'true')
+        
+        // Chuyển về trang chủ
+        navigate('/')
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
+
     } finally {
       setLoading(false)
     }
@@ -62,6 +84,7 @@ function Login() {
         <source src={backgroundVideo} type="video/mp4" />
       </video>
       
+
       {/* Back to Home Button */}
       <button className="back-home-btn" onClick={() => navigate('/')}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -70,6 +93,8 @@ function Login() {
         <span>Trang chủ</span>
       </button>
       
+
+
       {/* Website branding */}
       <div className="website-branding" onClick={() => navigate('/')}>EVMARKETPLAY.VN</div>
       

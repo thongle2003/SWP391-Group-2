@@ -42,6 +42,7 @@ function Header() {
     }
   }
 
+
   const handleLogout = async () => {
     if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
       try {
@@ -65,6 +66,22 @@ function Header() {
         alert('Đã đăng xuất!')
         navigate('/')
       }
+  const handleLogout = () => {
+    if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
+      // Xóa toàn bộ data của user
+      localStorage.clear() // Xóa tất cả localStorage
+      // Hoặc xóa từng item cụ thể:
+      // localStorage.removeItem('user')
+      // localStorage.removeItem('isLoggedIn')
+      // localStorage.removeItem('userID')
+      // localStorage.removeItem('avatar')
+      // localStorage.removeItem('token')
+      
+      setUser(null)
+      setShowUserMenu(false)
+      alert('Đăng xuất thành công!')
+      navigate('/')
+
     }
   }
 
@@ -121,7 +138,11 @@ function Header() {
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
+
                   Hello, {user.username || user.userName || user.name || 'User'}
+
+                  Hello, {user.username}
+
                 </button>
                 
                 {showUserMenu && (

@@ -4,6 +4,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import RoleAwareHome from './components/RoleAwareHome'
 import About from './pages/About'
 import AdminDashboard from './pages/AdminDashboard'
+
+import About from './pages/About'
 import BuyCars from './pages/BuyCars'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -33,6 +35,8 @@ function App() {
         />
         <Route path="/buy" element={<BuyCars />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/buy" element={<BuyCars />} />
+
         <Route path="/sell" element={<SellCars />} />
         <Route path="/search" element={<Search />} />
         <Route path="/about" element={<About />} />

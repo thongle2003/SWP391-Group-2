@@ -17,6 +17,7 @@ import './UserProfile.css'
 function UserProfile() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
+
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
   const [, setLoading] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
@@ -56,6 +57,45 @@ function UserProfile() {
     } catch {
       return '/api'
     }
+=======
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false)
+  const [newAccount, setNewAccount] = useState({
+    name: '',
+    icon: '💳',
+    accountNumber: '',
+    status: 'active',
+    color: '#4a90e2'
+  })
+
+  // Sample user data
+  const [userData, setUserData] = useState({
+    name: 'Sơn Trường Giang',
+    age: 16,
+    gender: 'Nam',
+    location: 'Hà Nội, Việt Nam',
+    phone: '+84 0373467950',
+    email: 'gianghosonanh@gmail.com',
+    segment: 'Khách hàng thân thiết',
+    memberSince: 'Tháng 12',
+    country: 'Việt Nam',
+    district: 'Quận Cầu Giấy',
+    serviceStatus: 'Đang sử dụng',
+    renewalDate: 'ĐK 1 năm',
+    tags: ['KV Hà Nội', 'KH Premium', 'ĐK 1 năm']
+  })
+
+  const [editedUserData, setEditedUserData] = useState({...userData})
+
+  const stats = {
+    totalDeposit: '2,021,345,000',
+    orders: 3,
+    totalOrderValue: '410,000,000',
+    interactions: 31,
+    flow: 13,
+    campaign: 13,
+    sequence: 5
+
   }
   
   const buildUrl = (path) => `${resolveBase()}${path}`
@@ -127,6 +167,7 @@ function UserProfile() {
     }
   }
 
+
   const fetchPurchasedOrders = async () => {
     if (!token || !currentUserId) return
     try {
@@ -139,15 +180,80 @@ function UserProfile() {
       setPurchasedOrders([])
     }
   }
-
+=======
   const handleEditProfileClick = () => {
-    setEditedUserData({ ...userData })
+    setEditedUserData({...userData})
     setShowEditProfileModal(true)
   }
 
   const handleProfileInputChange = (field, value) => {
     setEditedUserData({ ...editedUserData, [field]: value })
   }
+
+  const handleSaveProfile = () => {
+    setUserData({...editedUserData})
+    setShowEditProfileModal(false)
+    alert('Thông tin đã được cập nhật thành công!')
+  }
+
+  return (
+    <div className="user-profile-page">
+      <Header />
+
+      <div className="profile-container">
+        {/* Back Button */}
+        <div className="back-navigation">
+          <button className="back-btn" onClick={() => navigate('/')}>
+            ← Trở lại danh sách
+          </button>
+        </div>
+
+        <div className="profile-content">
+          {/* Left Sidebar - User Info */}
+          <div className="profile-sidebar">
+            <div className="user-card">
+              {/* Profile Picture */}
+              <div className="profile-picture-section">
+                <div className="profile-picture">
+                  <img src="https://via.placeholder.com/150" alt={userData.name} />
+                  <span className="online-status"></span>
+                </div>
+              </div>
+
+
+  const handleEditProfileClick = () => {
+    setEditedUserData({ ...userData })
+    setShowEditProfileModal(true)
+  }
+
+
+  const handleProfileInputChange = (field, value) => {
+    setEditedUserData({ ...editedUserData, [field]: value })
+  }
+
+              {/* Divider */}
+              <div className="info-divider"></div>
+
+              {/* Contact Info */}
+              <div className="contact-info">
+                <div className="contact-info-header">
+                  <h3 className="section-title-small">Thông tin liên hệ</h3>
+                  <button className="edit-info-btn" title="Chỉnh sửa thông tin" onClick={handleEditProfileClick}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="info-item">
+                  <span className="info-icon">📞</span>
+                  <div>
+                    <label>Điện thoại</label>
+                    <p>{userData.phone}</p>
+                  </div>
+                </div>
+
 
   const handleSaveProfile = async () => {
     if (!token || !currentUserId) {
@@ -397,9 +503,151 @@ function UserProfile() {
         </div>
       </div>
 
+
       {showEditProfileModal && (
         <div className="modal-overlay" onClick={() => setShowEditProfileModal(false)}>
           <div className="modal-content edit-profile-modal" onClick={(e) => e.stopPropagation()}>
+
+      {/* Edit Profile Modal */}
+      {showEditProfileModal && (
+        <div className="modal-overlay" onClick={() => setShowEditProfileModal(false)}>
+          <div className="modal-content edit-profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Chỉnh sửa thông tin cá nhân</h2>
+              <button className="modal-close" onClick={() => setShowEditProfileModal(false)}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Họ và tên *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập họ và tên"
+                    value={editedUserData.name}
+                    onChange={(e) => handleProfileInputChange('name', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Tuổi *</label>
+                  <input 
+                    type="number" 
+                    placeholder="Nhập tuổi"
+                    value={editedUserData.age}
+                    onChange={(e) => handleProfileInputChange('age', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Giới tính *</label>
+                  <select 
+                    value={editedUserData.gender}
+                    onChange={(e) => handleProfileInputChange('gender', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Địa chỉ *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập địa chỉ"
+                    value={editedUserData.location}
+                    onChange={(e) => handleProfileInputChange('location', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Số điện thoại *</label>
+                  <input 
+                    type="tel" 
+                    placeholder="Nhập số điện thoại"
+                    value={editedUserData.phone}
+                    onChange={(e) => handleProfileInputChange('phone', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input 
+                    type="email" 
+                    placeholder="Nhập email"
+                    value={editedUserData.email}
+                    onChange={(e) => handleProfileInputChange('email', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Quốc gia/Khu vực</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập quốc gia"
+                    value={editedUserData.country}
+                    onChange={(e) => handleProfileInputChange('country', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Quận/Huyện</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nhập quận/huyện"
+                    value={editedUserData.district}
+                    onChange={(e) => handleProfileInputChange('district', e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Segment</label>
+                <input 
+                  type="text" 
+                  placeholder="Nhập segment"
+                  value={editedUserData.segment}
+                  onChange={(e) => handleProfileInputChange('segment', e.target.value)}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setShowEditProfileModal(false)}>
+                Hủy
+              </button>
+              <button 
+                className="btn-submit" 
+                onClick={handleSaveProfile}
+              >
+                Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Account Modal */}
+      {showAddAccountModal && (
+        <div className="modal-overlay" onClick={() => setShowAddAccountModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+
             <div className="modal-header">
               <h2>Chỉnh sửa thông tin cá nhân</h2>
               <button className="modal-close" onClick={() => setShowEditProfileModal(false)}>×</button>
