@@ -2,7 +2,10 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import backgroundVideo from '../assets/33vfxVliVS7mnZQ8o2LDBHzOqvL.mp4'
+
+import apiService from '../services/apiService'
 import api from '../services/api'
+
 import './Login.css'
 
 function Login() {
@@ -16,6 +19,19 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    
+    // Validation
+    if (!username || !password) {
+      setError('Vui lòng điền đầy đủ thông tin')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      // Call API login - apiService sẽ tự động lưu token và user data
+      const response = await apiService.login({
+
     setLoading(true)
 
     try {
@@ -23,6 +39,26 @@ function Login() {
         username,
         password
       })
+
+
+      // Kiểm tra response có token
+      if (response && response.token) {
+        // Đăng nhập thành công
+        console.log('Login successful, redirecting to home...')
+        
+        // Trigger custom event để Header reload user data
+        window.dispatchEvent(new Event('storage'))
+        
+        // Đợi một chút để localStorage được cập nhật
+        setTimeout(() => {
+          navigate('/')
+        }, 100)
+      } else {
+        setError('Đăng nhập thất bại')
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
 
       // Lưu thông tin user vào localStorage
       if (response.data) {
@@ -35,6 +71,7 @@ function Login() {
     } catch (err) {
       console.error('Login error:', err)
       setError(err.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
+
     } finally {
       setLoading(false)
     }
@@ -47,6 +84,17 @@ function Login() {
         <source src={backgroundVideo} type="video/mp4" />
       </video>
       
+
+      {/* Back to Home Button */}
+      <button className="back-home-btn" onClick={() => navigate('/')}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Trang chủ</span>
+      </button>
+      
+
+
       {/* Website branding */}
       <div className="website-branding" onClick={() => navigate('/')}>EVMARKETPLAY.VN</div>
       
