@@ -18,7 +18,7 @@ function UserProfile() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
 
   const token = localStorage.getItem('authToken')
