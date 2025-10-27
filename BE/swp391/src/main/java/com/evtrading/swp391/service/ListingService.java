@@ -208,11 +208,9 @@ public class ListingService {
             throw new RuntimeException("You don't have permission to delete this listing");
         }
         
-        // Xóa hình ảnh trước
-        listingImageRepository.deleteByListingListingID(id);
-        
-        // Xóa listing
-        listingRepository.delete(listing);
+        // Chuyển trạng thái bài đăng thành DELETED
+        listing.setStatus("DELETED");
+        listingRepository.save(listing);
     }
 
     /**
