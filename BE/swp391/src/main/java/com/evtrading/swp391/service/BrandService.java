@@ -1,10 +1,13 @@
 package com.evtrading.swp391.service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.evtrading.swp391.dto.BrandDTO;
 import com.evtrading.swp391.entity.Brand;
 import com.evtrading.swp391.repository.BrandRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
