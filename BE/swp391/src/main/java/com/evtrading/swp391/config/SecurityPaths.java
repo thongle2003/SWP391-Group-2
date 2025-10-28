@@ -14,7 +14,10 @@ public final class SecurityPaths {
     private static final String[] PUBLIC_ENDPOINTS = new String[] {
             "/api/auth/**",
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/api/vnpay/ipn",
+            "/api/vnpay/callback"
+            
     };
 
     private SecurityPaths() {
