@@ -55,6 +55,20 @@ public class JwtProvider {
                 .compact();
     }
 
+    // Thêm method helper để sinh token từ username (dùng cho social login client-side)
+    public String generateTokenFromUsername(String username) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("username", username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(signingKey)
+                .compact();
+    }
+
     public boolean validateJwtToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(signingKey).build().parse(token);

@@ -12,8 +12,11 @@ import com.evtrading.swp391.security.JwtProvider;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus; // Add this import for HttpStatus
 
@@ -30,6 +33,11 @@ public class SocialAuthService {
     private final GoogleAuthVerifier googleVerifier;
     private final FacebookAuthVerifier fbVerifier;
     private final JwtProvider jwtProvider;
+
+    @Value("${GOOGLE_CLIENT_ID}")
+    private String googleClientId;
+
+    private final RestTemplate rest = new RestTemplate();
 
     private String generateUniqueUsername(String base) {
         if (base == null || base.isBlank()) {
@@ -56,6 +64,41 @@ public class SocialAuthService {
         
         // Convert về UTF-8 để đảm bảo encoding
         return new String(unique.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Verify Google id_token obtained on client-side (Google Identity).
+     * Uses Google's tokeninfo endpoint.
+     * Returns token payload as Map if valid; throws RuntimeException on invalid.
+     */
+    public Map<String, Object> verifyGoogleIdToken(String idToken) {
+        // call tokeninfo
+        String url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
+        ResponseEntity<Map> resp = rest.getForEntity(url, Map.class);
+
+        if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
+            throw new RuntimeException("Invalid Google id_token");
+        }
+
+        Map<String, Object> payload = resp.getBody();
+
+        // Validate audience (aud)
+        Object aud = payload.get("aud");
+        if (aud == null || !googleClientId.equals(aud.toString())) {
+            throw new RuntimeException("Invalid Google token audience");
+        }
+
+        // Validate email_verified
+        Object emailVerified = payload.get("email_verified");
+        if (emailVerified != null && !"true".equals(emailVerified.toString())) {
+            throw new RuntimeException("Google account email not verified");
+        }
+
+        // Optionally validate expiry: tokeninfo returns "exp" (seconds since epoch) or "exp" may be absent.
+        // You can check "exp" here if needed.
+
+        // payload contains fields: iss, azp, aud, sub, email, email_verified, name, picture, given_name, family_name, iat, exp, ...
+        return payload;
     }
 
     @Transactional

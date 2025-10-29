@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final SocialAuthService socialAuthService;
+    private final JwtProvider jwtProvider;
 
     /**
      * AuthenticationManager là thành phần chính của Spring Security
@@ -45,17 +46,12 @@ public class AuthController {
     @Autowired
     UserService userService;
 
-    /**
-     * JwtProvider cung cấp các phương thức để tạo và xác thực JWT token
-     */
-    @Autowired
-    JwtProvider jwtProvider;
-
     @Autowired
     UserRepository userRepository;
 
-    AuthController(SocialAuthService socialAuthService) {
+    public AuthController(SocialAuthService socialAuthService, JwtProvider jwtProvider /*, other deps */) {
         this.socialAuthService = socialAuthService;
+        this.jwtProvider = jwtProvider;
     }
 
     /**
@@ -169,8 +165,28 @@ public class AuthController {
 
     @SecurityRequirements
     @PostMapping("/social")
-  public ResponseEntity<?> social(@RequestBody SocialLoginRequestDTO request) {
-        var token = socialAuthService.login(request);
-        return ResponseEntity.ok(token);
-  }
+    public ResponseEntity<?> social(@RequestBody SocialLoginRequestDTO request) {
+        if ("google".equalsIgnoreCase(request.getProvider())) {
+            // Verify id_token with Google
+            var googlePayload = socialAuthService.verifyGoogleIdToken(request.getAccessToken());
+
+            // Lấy email và username từ payload
+            String email = (String) googlePayload.get("email");
+            String username = null;
+            if (email != null && email.contains("@")) {
+                username = email.split("@")[0];
+            } else {
+                username = (String) googlePayload.get("sub"); // fallback to sub
+            }
+
+            // Sinh JWT dựa trên username (method mới trong JwtProvider)
+            String token = jwtProvider.generateTokenFromUsername(username);
+
+            // Trả về AuthResponseDTO: (token, userID, username, email, role)
+            AuthResponseDTO resp = new AuthResponseDTO(token, null, username, email, "USER");
+            return ResponseEntity.ok(resp);
+        }
+
+        return ResponseEntity.badRequest().body("Unsupported provider");
+    }
 }
