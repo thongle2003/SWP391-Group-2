@@ -12,11 +12,29 @@ function Header() {
   useEffect(() => {
     const checkUser = () => {
       const storedUser = localStorage.getItem('user')
+      const token = apiService.getAuthToken()
+      // Chỉ bắt đăng nhập ở các trang cần bảo mật
+      const protectedPaths = [
+        '/user-profile',
+        '/my-orders',
+        '/orders-payment',
+        '/sell'
+      ]
+      if ((!token || apiService.isTokenExpired()) && protectedPaths.includes(window.location.pathname)) {
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('user')
+        localStorage.removeItem('userData')
+        localStorage.removeItem('isLoggedIn')
+        localStorage.removeItem('userID')
+        setUser(null)
+        window.location.href = '/login'
+        return
+      }
       if (storedUser) {
         try {
           setUser(JSON.parse(storedUser))
         } catch (error) {
-          console.error('Error parsing user data:', error)
+          setUser(null)
         }
       } else {
         setUser(null)
@@ -78,7 +96,7 @@ function Header() {
           {/* Menu Navigation */}
           <nav className="main-nav">
             <a onClick={() => navigate('/buy')} className="nav-link">Mua sản phẩm</a>
-            <a onClick={() => navigate('/sell')} className="nav-link">Bán sản phẩm</a>
+            <a onClick={() => navigate('/sell')} className="nav-link">Tạo bài đăng</a>
             <a href="#" className="nav-link">Liên hệ</a>
             <a onClick={() => navigate('/about')} className="nav-link">Về chúng tôi</a>
           </nav>
@@ -131,6 +149,9 @@ function Header() {
                     </div>
                     <div className="dropdown-item" onClick={() => { navigate('/my-orders'); setShowUserMenu(false); }}>
                       <span>📦</span> Đơn Đã Mua
+                    </div>
+                    <div className="dropdown-item" onClick={() => { navigate('/orders-payment'); setShowUserMenu(false); }}>
+                      <span>💳</span> Thanh toán đơn hàng
                     </div>
                     <div className="dropdown-divider"></div>
                     <div className="dropdown-item" onClick={handleLogout}>

@@ -5,6 +5,7 @@ import com.evtrading.swp391.dto.OrderResponseDTO;
 import com.evtrading.swp391.dto.PaymentRequestDTO;
 import com.evtrading.swp391.dto.PaymentResponseDTO;
 import com.evtrading.swp391.dto.TransactionReportDTO;
+import com.evtrading.swp391.dto.VnpayCallbackResultDTO;
 import com.evtrading.swp391.entity.Listing;
 import com.evtrading.swp391.entity.Order;
 import com.evtrading.swp391.entity.Transaction;
@@ -16,6 +17,8 @@ import com.evtrading.swp391.repository.TransactionRepository;
 import com.evtrading.swp391.repository.PaymentRepository;
 import com.evtrading.swp391.repository.UserRepository;
 import com.evtrading.swp391.util.VnpayUtil;
+import com.evtrading.swp391.dto.TransactionDTO;
+
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.Map;
 
 @Service
 public class OrderService {
@@ -114,7 +117,7 @@ public class OrderService {
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         // Cập nhật Listing status
-        listing.setStatus("SOLD");
+        listing.setStatus("PROCESSING");
         listingRepository.save(listing);
 
         // Tạo response DTO
@@ -311,48 +314,52 @@ public class OrderService {
         }).collect(Collectors.toList());
     }
 
-    public boolean handleVnpayCallback(Map<String, String> params) {
-        String vnpTxnRef = params.get("vnp_TxnRef"); // orderId
+    public VnpayCallbackResultDTO handleVnpayCallback(Map<String, String> params) {
+        String vnpTxnRef = params.get("vnp_TxnRef");
         String vnpTransactionNo = params.get("vnp_TransactionNo");
         String vnpResponseCode = params.get("vnp_ResponseCode");
         String vnpSecureHash = params.get("vnp_SecureHash");
 
-        // Xác thực chữ ký
         Map<String, String> paramsForHash = new HashMap<>(params);
         paramsForHash.remove("vnp_SecureHash");
         String hashData = VnpayUtil.buildHashData(paramsForHash);
         String myHash = VnpayUtil.hmacSHA512(vnpHashSecret, hashData);
         if (!myHash.equalsIgnoreCase(vnpSecureHash)) {
             logger.error("VNPAY callback: Invalid secure hash!");
-            return false;
+            return new VnpayCallbackResultDTO(false, "Chữ ký bảo mật không hợp lệ!");
         }
 
-        // Kiểm tra trạng thái giao dịch
-        if (!"00".equals(vnpResponseCode)) {
-            logger.warn("VNPAY callback: Payment failed, response code: {}", vnpResponseCode);
-            return false;
-        }
-
-        // Tìm payment theo paymentId (vnp_TxnRef)
         Integer paymentId;
         try {
             paymentId = Integer.parseInt(vnpTxnRef);
         } catch (Exception e) {
             logger.error("VNPAY callback: Invalid paymentId {}", vnpTxnRef);
-            return false;
+            return new VnpayCallbackResultDTO(false, "Mã giao dịch không hợp lệ!");
         }
-
         Payment payment = paymentRepository.findById(paymentId).orElse(null);
-        if (payment == null || !"PENDING".equals(payment.getStatus())) {
-            logger.warn("Payment not found or already processed: {}", vnpTxnRef);
-            return false;
+        if (payment == null) {
+            logger.error("VNPAY callback: Payment not found: {}", paymentId);
+            return new VnpayCallbackResultDTO(false, "Không tìm thấy giao dịch thanh toán!");
         }
 
-        // VẪN LẤY transaction và order
+        if (!"00".equals(vnpResponseCode)) {
+            logger.warn("VNPAY callback: Payment failed, response code: {}", vnpResponseCode);
+            if ("PENDING".equals(payment.getStatus())) {
+                payment.setStatus("FAILED");
+                paymentRepository.save(payment);
+            }
+            String reason = "Thanh toán thất bại. Mã lỗi: " + vnpResponseCode;
+            return new VnpayCallbackResultDTO(false, reason);
+        }
+
+        if (!"PENDING".equals(payment.getStatus())) {
+            logger.warn("VNPAY callback: Payment already processed: {}", paymentId);
+            return new VnpayCallbackResultDTO(false, "Giao dịch đã được xử lý trước đó.");
+        }
+
         Transaction transaction = payment.getTransaction();
         Order order = transaction.getOrder();
 
-        // Cập nhật trạng thái
         payment.setStatus("COMPLETED");
         paymentRepository.save(payment);
 
@@ -367,103 +374,120 @@ public class OrderService {
         transactionRepository.save(transaction);
 
         logger.info("VNPAY callback: Payment completed for order {}", order.getOrderID());
-        return true;
+        return new VnpayCallbackResultDTO(true, "Thanh toán thành công!");
     }
+
     /**
- * Tạo Transaction Report cho BẤT KỲ user nào (dành cho Admin)
- * 
- * @param userId ID của user cần tạo report
- * @param fromDate Ngày bắt đầu
- * @param toDate Ngày kết thúc
- * @return TransactionReportDTO
- */
-public TransactionReportDTO generateTransactionReportByUserId(
-        Integer userId, 
-        Date fromDate, 
-        Date toDate) {
-    
-    logger.info("Generating transaction report for user ID: {}", userId);
-    
-    // Tìm user theo ID (không dùng authentication)
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> {
-                logger.error("User not found with ID: {}", userId);
-                return new RuntimeException("User not found: " + userId);
-            });
-    
-    // Lấy danh sách transactions của user này
-    List<Transaction> transactions;
-    if (fromDate != null && toDate != null) {
-        transactions = transactionRepository.findByOrder_BuyerAndCreatedAtBetween(
-            user, fromDate, toDate
-        );
-    } else {
-        transactions = transactionRepository.findByOrder_Buyer(user);
-    }
-    
-    // Tạo report DTO (logic giống hệt generateTransactionReport)
-    TransactionReportDTO report = new TransactionReportDTO();
-    report.setUserId(user.getUserID());
-    report.setUsername(user.getUsername());
-    report.setReportGeneratedAt(new Date());
-    report.setFromDate(fromDate);
-    report.setToDate(toDate);
-    
-    // Tính toán thống kê
-    report.setTotalOrders(transactions.size());
-    
-    int completedCount = 0;
-    int pendingCount = 0;
-    BigDecimal totalRevenue = BigDecimal.ZERO;
-    BigDecimal totalPaid = BigDecimal.ZERO;
-    BigDecimal totalRemaining = BigDecimal.ZERO;
-    
-    for (Transaction t : transactions) {
-        if ("FULLY_PAID".equals(t.getStatus())) {
-            completedCount++;
+     * Tạo Transaction Report cho BẤT KỲ user nào (dành cho Admin)
+     * 
+     * @param userId   ID của user cần tạo report
+     * @param fromDate Ngày bắt đầu
+     * @param toDate   Ngày kết thúc
+     * @return TransactionReportDTO
+     */
+    public TransactionReportDTO generateTransactionReportByUserId(
+            Integer userId,
+            Date fromDate,
+            Date toDate) {
+
+        logger.info("Generating transaction report for user ID: {}", userId);
+
+        // Tìm user theo ID (không dùng authentication)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    logger.error("User not found with ID: {}", userId);
+                    return new RuntimeException("User not found: " + userId);
+                });
+
+        // Lấy danh sách transactions của user này
+        List<Transaction> transactions;
+        if (fromDate != null && toDate != null) {
+            transactions = transactionRepository.findByOrder_BuyerAndCreatedAtBetween(
+                    user, fromDate, toDate);
         } else {
-            pendingCount++;
+            transactions = transactionRepository.findByOrder_Buyer(user);
         }
-        totalRevenue = totalRevenue.add(t.getTotalAmount());
-        totalPaid = totalPaid.add(t.getPaidAmount());
-        totalRemaining = totalRemaining.add(
-            t.getTotalAmount().subtract(t.getPaidAmount())
-        );
-    }
-    
-    report.setCompletedOrders(completedCount);
-    report.setPendingOrders(pendingCount);
-    report.setTotalRevenue(totalRevenue);
-    report.setTotalPaid(totalPaid);
-    report.setTotalRemaining(totalRemaining);
-    
-    // Chi tiết giao dịch
-    List<TransactionReportDTO.TransactionDetailDTO> details = 
-        transactions.stream()
-            .map(t -> {
-                TransactionReportDTO.TransactionDetailDTO detail = 
-                    new TransactionReportDTO.TransactionDetailDTO();
-                detail.setTransactionId(t.getTransactionID());
-                detail.setOrderId(t.getOrder().getOrderID());
-                detail.setListingTitle(t.getOrder().getListing().getTitle());
-                detail.setTotalAmount(t.getTotalAmount());
-                detail.setPaidAmount(t.getPaidAmount());
-                detail.setStatus(t.getStatus());
-                detail.setCreatedAt(t.getCreatedAt());
-                
-                List<Payment> payments = paymentRepository
-                    .findByTransactionOrderByPaidAtDesc(t);
-                detail.setNumberOfPayments(payments.size());
-                
-                return detail;
-            })
-            .collect(Collectors.toList());
-    
-    report.setTransactions(details);
-    
-    logger.info("Generated report for user {} with {} transactions", 
+
+        // Tạo report DTO (logic giống hệt generateTransactionReport)
+        TransactionReportDTO report = new TransactionReportDTO();
+        report.setUserId(user.getUserID());
+        report.setUsername(user.getUsername());
+        report.setReportGeneratedAt(new Date());
+        report.setFromDate(fromDate);
+        report.setToDate(toDate);
+
+        // Tính toán thống kê
+        report.setTotalOrders(transactions.size());
+
+        int completedCount = 0;
+        int pendingCount = 0;
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        BigDecimal totalPaid = BigDecimal.ZERO;
+        BigDecimal totalRemaining = BigDecimal.ZERO;
+
+        for (Transaction t : transactions) {
+            if ("FULLY_PAID".equals(t.getStatus())) {
+                completedCount++;
+            } else {
+                pendingCount++;
+            }
+            totalRevenue = totalRevenue.add(t.getTotalAmount());
+            totalPaid = totalPaid.add(t.getPaidAmount());
+            totalRemaining = totalRemaining.add(
+                    t.getTotalAmount().subtract(t.getPaidAmount()));
+        }
+
+        report.setCompletedOrders(completedCount);
+        report.setPendingOrders(pendingCount);
+        report.setTotalRevenue(totalRevenue);
+        report.setTotalPaid(totalPaid);
+        report.setTotalRemaining(totalRemaining);
+
+        // Chi tiết giao dịch
+        List<TransactionReportDTO.TransactionDetailDTO> details = transactions.stream()
+                .map(t -> {
+                    TransactionReportDTO.TransactionDetailDTO detail = new TransactionReportDTO.TransactionDetailDTO();
+                    detail.setTransactionId(t.getTransactionID());
+                    detail.setOrderId(t.getOrder().getOrderID());
+                    detail.setListingTitle(t.getOrder().getListing().getTitle());
+                    detail.setTotalAmount(t.getTotalAmount());
+                    detail.setPaidAmount(t.getPaidAmount());
+                    detail.setStatus(t.getStatus());
+                    detail.setCreatedAt(t.getCreatedAt());
+
+                    List<Payment> payments = paymentRepository
+                            .findByTransactionOrderByPaidAtDesc(t);
+                    detail.setNumberOfPayments(payments.size());
+
+                    return detail;
+                })
+                .collect(Collectors.toList());
+
+        report.setTransactions(details);
+
+        logger.info("Generated report for user {} with {} transactions",
                 user.getUsername(), transactions.size());
-    
-    return report;
-        }
+
+        return report;
+    }
+
+    public List<TransactionDTO> getCurrentUserTransactions(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Transaction> transactions = transactionRepository.findByOrder_Buyer(user);
+
+        return transactions.stream().map(t -> {
+            TransactionDTO dto = new TransactionDTO();
+            dto.setTransactionId(t.getTransactionID());
+            dto.setCreatedAt(t.getCreatedAt());
+            dto.setExpiredAt(t.getDueTime());
+            dto.setStatus(t.getStatus());
+            dto.setTotalAmount(t.getTotalAmount());
+            dto.setOrderId(t.getOrder().getOrderID());
+            dto.setPaidAmount(t.getPaidAmount());
+
+            return dto;
+        }).collect(Collectors.toList());
+    }
 }

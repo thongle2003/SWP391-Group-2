@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -83,6 +85,7 @@ public class ListingController {
         return ResponseEntity.ok(listings);
     }
 
+    @SecurityRequirements
     @Operation(summary = "Lấy chi tiết bài đăng", description = "Lấy thông tin chi tiết của một bài đăng")
     @GetMapping("/{id}")
     public ResponseEntity<ListingResponseDTO> getListingById(@PathVariable Integer id) {
@@ -187,6 +190,7 @@ public class ListingController {
         return ResponseEntity.ok(pendingListings);
     }
 
+    @SecurityRequirements
     @Operation(summary = "Tìm kiếm bài đăng", description = "Tìm kiếm theo từ khóa, category, brand, khoảng giá, năm sản xuất...")
     @GetMapping("/search")
     public ResponseEntity<Page<ListingResponseDTO>> searchListings(

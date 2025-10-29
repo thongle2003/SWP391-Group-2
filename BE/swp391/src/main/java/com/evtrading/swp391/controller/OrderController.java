@@ -8,18 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.evtrading.swp391.dto.OrderRequestDTO;
 import com.evtrading.swp391.dto.OrderResponseDTO;
 import com.evtrading.swp391.dto.PaymentRequestDTO;
 import com.evtrading.swp391.dto.PaymentResponseDTO;
 import com.evtrading.swp391.dto.TransactionReportDTO;
+import com.evtrading.swp391.dto.TransactionDTO;
 import com.evtrading.swp391.entity.Payment;
 import com.evtrading.swp391.entity.User;
 import com.evtrading.swp391.service.OrderService;
@@ -40,7 +35,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -151,44 +145,58 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
-    
+
     /**
- /**
- * Admin xem transaction report của BẤT KỲ user nào
- * 
- * @param userId ID của user cần xem report (bắt buộc)
- * @param fromDate Ngày bắt đầu (optional)
- * @param toDate Ngày kết thúc (optional)
- */
-@Operation(
-    summary = "Admin: Tạo báo cáo giao dịch cho bất kỳ user nào", 
-    description = "Admin có thể xem report giao dịch của mọi user trong hệ thống bằng cách truyền userId"
-)
-@SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasRole('ADMIN')") // Chỉ ADMIN
-@GetMapping("/admin/transactions/report")
-public ResponseEntity<TransactionReportDTO> generateReportForAnyUser(
-        @RequestParam Integer userId, // Bắt buộc phải có userId
-        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date fromDate,
-        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date toDate,
-        Authentication authentication) {
-    
-    try {
-        // Gọi service với userId được chỉ định
-        TransactionReportDTO report = orderService.generateTransactionReportByUserId(
-            userId, 
-            fromDate, 
-            toDate
-        );
-        
-        logger.info("Admin {} generated report for user ID: {}", 
+     * /**
+     * Admin xem transaction report của BẤT KỲ user nào
+     * 
+     * @param userId   ID của user cần xem report (bắt buộc)
+     * @param fromDate Ngày bắt đầu (optional)
+     * @param toDate   Ngày kết thúc (optional)
+     */
+    @Operation(summary = "Admin: Tạo báo cáo giao dịch cho bất kỳ user nào", description = "Admin có thể xem report giao dịch của mọi user trong hệ thống bằng cách truyền userId")
+    @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("hasRole('ADMIN')") // Chỉ ADMIN
+    @GetMapping("/admin/transactions/report")
+    public ResponseEntity<TransactionReportDTO> generateReportForAnyUser(
+            @RequestParam Integer userId, // Bắt buộc phải có userId
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date fromDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date toDate,
+            Authentication authentication) {
+
+        try {
+            // Gọi service với userId được chỉ định
+            TransactionReportDTO report = orderService.generateTransactionReportByUserId(
+                    userId,
+                    fromDate,
+                    toDate);
+
+            logger.info("Admin {} generated report for user ID: {}",
                     authentication.getName(), userId);
-        
-        return ResponseEntity.ok(report);
-        
-    } catch (RuntimeException e) {
-        logger.error("Error generating report for user {}: {}", userId, e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+
+            return ResponseEntity.ok(report);
+
+        } catch (RuntimeException e) {
+            logger.error("Error generating report for user {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
-}
+
+    @Operation(summary = "Lấy tất cả transaction của user hiện tại")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/transactions")
+    public ResponseEntity<List<TransactionDTO>> getCurrentUserTransactions(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            String username = authentication.getName();
+            List<TransactionDTO> transactions = orderService.getCurrentUserTransactions(username);
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            logger.error("Error getting transactions: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
 }

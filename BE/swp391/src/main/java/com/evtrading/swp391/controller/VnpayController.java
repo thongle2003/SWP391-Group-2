@@ -2,7 +2,10 @@ package com.evtrading.swp391.controller;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.evtrading.swp391.dto.VnpayCallbackResultDTO;
 import com.evtrading.swp391.service.OrderService;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 @RestController
@@ -12,16 +15,17 @@ public class VnpayController {
     private OrderService orderService;
 
     @GetMapping("/callback")
-    public String vnpayCallback(@RequestParam Map<String, String> params) {
-        // Xác thực chữ ký, cập nhật trạng thái Payment/Transaction
-        boolean success = orderService.handleVnpayCallback(params);
-        return success ? "Thanh toán thành công!" : "Thanh toán thất bại!";
+    public void vnpayCallback(@RequestParam Map<String, String> params, HttpServletResponse response)
+            throws java.io.IOException {
+        VnpayCallbackResultDTO result = orderService.handleVnpayCallback(params);
+        String redirectUrl = "http://localhost:5173/orders-payment?status=" + (result.isSuccess() ? "success" : "fail")
+                + "&reason=" + java.net.URLEncoder.encode(result.getMessage(), "UTF-8");
+        response.sendRedirect(redirectUrl);
     }
 
     @PostMapping("/ipn")
     public String vnpayIpn(@RequestParam Map<String, String> params) {
-        boolean success = orderService.handleVnpayCallback(params);
-        // VNPAY yêu cầu trả về "response_code=00" nếu thành công
-        return success ? "response_code=00" : "response_code=99";
+        VnpayCallbackResultDTO result = orderService.handleVnpayCallback(params);
+        return result.isSuccess() ? "response_code=00" : "response_code=99";
     }
 }

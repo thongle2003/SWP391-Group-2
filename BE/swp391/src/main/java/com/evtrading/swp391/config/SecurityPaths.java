@@ -16,7 +16,12 @@ public final class SecurityPaths {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/api/vnpay/ipn",
-            "/api/vnpay/callback"
+            "/api/vnpay/callback",
+            "/api/listings/search",    // Cho phép tìm kiếm bài đăng public
+            "/api/listings/{id}",
+            "/api/listings/*",
+            "/api/brands",
+            "/api/categories"
             
     };
 

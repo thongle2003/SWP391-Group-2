@@ -51,7 +51,8 @@
 }
 
 .nav-link:hover {
-  color: #007bff;
+  color: #007bff !important;
+  cursor: pointer;
 }
 
 /* Search Bar */

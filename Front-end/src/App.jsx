@@ -9,6 +9,7 @@ import Register from './pages/Register'
 import Search from './pages/Search'
 import SellCars from './pages/SellCars'
 import UserProfile from './pages/UserProfile'
+import OrdersPayment from './pages/OrdersPayment'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/sell" element={<SellCars />} />
         <Route path="/search" element={<Search />} />
         <Route path="/about" element={<About />} />
+        <Route path="/orders-payment" element={<OrdersPayment />} />
       </Routes>
     </Router>
   )

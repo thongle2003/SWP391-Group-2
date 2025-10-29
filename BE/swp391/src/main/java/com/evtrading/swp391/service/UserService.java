@@ -68,7 +68,7 @@ public class UserService {
         */
         
         // New users must be approved by an admin before they become active
-        user.setStatus("Pending");
+        user.setStatus("Active");
         user.setCreatedAt(new java.util.Date());
         // Role mặc định là "Member"
         com.evtrading.swp391.entity.Role role = roleRepository.findByRoleName("Member");
