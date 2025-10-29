@@ -21,6 +21,7 @@ public class Contract {
     private String signerEmail;
     private String signerName;
     private String status;
+    private String signingUrl;
     private String signedFileUrl;
     private Date signedAt;
     private Date createAt;
@@ -43,6 +44,8 @@ public class Contract {
     public void setSignerName(String signerName) { this.signerName = signerName; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getSigningUrl() { return signingUrl; }
+    public void setSigningUrl(String signingUrl) { this.signingUrl = signingUrl; }
     public String getSignedFileUrl() { return signedFileUrl; }
     public void setSignedFileUrl(String signedFileUrl) { this.signedFileUrl = signedFileUrl; }
     public Date getSignedAt() { return signedAt; }
