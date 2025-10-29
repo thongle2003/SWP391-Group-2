@@ -199,4 +199,21 @@ public class OrderController {
         }
     }
 
+    @Operation(summary = "Lấy tất cả transaction đã thanh toán đủ của user hiện tại")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/transactions/fully-paid")
+    public ResponseEntity<List<TransactionDTO>> getCurrentUserFullyPaidTransactions(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            String username = authentication.getName();
+            List<TransactionDTO> transactions = orderService.getCurrentUserFullyPaidTransactions(username);
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            logger.error("Error getting fully paid transactions: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
 }

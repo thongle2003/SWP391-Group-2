@@ -477,17 +477,42 @@ public class OrderService {
 
         List<Transaction> transactions = transactionRepository.findByOrder_Buyer(user);
 
-        return transactions.stream().map(t -> {
-            TransactionDTO dto = new TransactionDTO();
-            dto.setTransactionId(t.getTransactionID());
-            dto.setCreatedAt(t.getCreatedAt());
-            dto.setExpiredAt(t.getDueTime());
-            dto.setStatus(t.getStatus());
-            dto.setTotalAmount(t.getTotalAmount());
-            dto.setOrderId(t.getOrder().getOrderID());
-            dto.setPaidAmount(t.getPaidAmount());
+        return transactions.stream()
+                .filter(t -> "PENDING".equals(t.getStatus()) || "PARTIALLY_PAID".equals(t.getStatus()))
+                .map(t -> {
+                    TransactionDTO dto = new TransactionDTO();
+                    dto.setTransactionId(t.getTransactionID());
+                    dto.setCreatedAt(t.getCreatedAt());
+                    dto.setExpiredAt(t.getDueTime());
+                    dto.setStatus(t.getStatus());
+                    dto.setTotalAmount(t.getTotalAmount());
+                    dto.setOrderId(t.getOrder().getOrderID());
+                    dto.setPaidAmount(t.getPaidAmount());
 
-            return dto;
-        }).collect(Collectors.toList());
+                    return dto;
+                }).collect(Collectors.toList());
     }
+
+    public List<TransactionDTO> getCurrentUserFullyPaidTransactions(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Transaction> transactions = transactionRepository.findByOrder_Buyer(user);
+
+        // Chỉ lấy status FULLY_PAID
+        return transactions.stream()
+                .filter(t -> "FULLY_PAID".equals(t.getStatus()))
+                .map(t -> {
+                    TransactionDTO dto = new TransactionDTO();
+                    dto.setTransactionId(t.getTransactionID());
+                    dto.setCreatedAt(t.getCreatedAt());
+                    dto.setExpiredAt(t.getDueTime());
+                    dto.setStatus(t.getStatus());
+                    dto.setTotalAmount(t.getTotalAmount());
+                    dto.setOrderId(t.getOrder().getOrderID());
+                    dto.setPaidAmount(t.getPaidAmount());
+                    return dto;
+                }).collect(Collectors.toList());
+    }
+
 }
