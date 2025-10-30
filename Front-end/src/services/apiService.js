@@ -7,77 +7,6 @@ const apiService = {
   API_BASE_URL,
   // thiết lập các phương thức api ở đây
 
-  //api để quản lý bài đăng sản phẩm
-  /**
-   * Lấy danh sách bài đăng với các tham số tùy chọn để lọc, phân trang và sắp xếp.
-   * Khớp chính xác với endpoint GET /api/listings trên backend.
-   * @param {object} params - Một đối tượng chứa các tham số truy vấn.
-   * Ví dụ: { status: 'PENDING', page: 0, size: 20, sortBy: 'price' }
-   */
-  getAll_products_post: (params = {}) => {
-    // URLSearchParams sẽ tự động bỏ qua các giá trị undefined hoặc null
-    // và mã hóa (encode) các giá trị một cách chính xác.
-    const query = new URLSearchParams(params).toString();
-
-    // Nếu query không rỗng, thêm '?' vào trước, ngược lại trả về chuỗi rỗng.
-    const queryString = query ? `?${query}` : "";
-
-    return `${API_BASE_URL}/listings${queryString}`;
-  },
-
-  /**
-   * Từ chối một bài đăng.
-   * @param {number} productId - ID của bài đăng, sẽ được chèn vào đường dẫn.
-   * @param {string} reason - Lý do từ chối, sẽ được thêm làm query parameter.
-   */
-  reject_product_post: (productId, reason) => {
-    // 1. Tạo URL cơ sở với path variable
-    const url = `${API_BASE_URL}/listings/${productId}/reject`;
-
-    // 2. Dùng URLSearchParams để thêm 'reason' một cách an toàn
-    // (tự động mã hóa ký tự đặc biệt như dấu cách, tiếng Việt)
-    const params = new URLSearchParams();
-    if (reason) {
-      // Chỉ thêm 'reason' nếu nó tồn tại
-      params.append("reason", reason);
-    }
-
-    const queryString = params.toString();
-
-    // 3. Kết hợp lại
-    return `${url}${queryString ? `?${queryString}` : ""}`;
-  },
-
-  approve_product_post: (productId) =>
-    `${API_BASE_URL}/listings/${productId}/approve`,
-
-  /**
-   * (SỬA LẠI HÀM NÀY)
-   * Lấy danh sách các bài đăng đang chờ phê duyệt (pending).
-   * Hỗ trợ phân trang và sắp xếp.
-   * @param {object} params - Đối tượng chứa tham số phân trang/sắp xếp.
-   * Ví dụ: { page: 1, size: 5, sortBy: 'price' }
-   */
-  get_pending_products_post: (params = {}) => {
-    // Tái sử dụng logic của URLSearchParams
-    const query = new URLSearchParams(params).toString();
-    const queryString = query ? `?${query}` : "";
-
-    return `${API_BASE_URL}/listings/pending${queryString}`;
-  },
-
-
-
-
-  //api user controller
-  get_user_by_id: (userId) => `${API_BASE_URL}/users/${userId}`,
-  update_user_by_id: (userId) => `${API_BASE_URL}/users/${userId}`,
-  delete_user_by_id: (userId) => `${API_BASE_URL}/users/${userId}`,
-  get_all_users: `${API_BASE_URL}/users`,
-  create_new_user: `${API_BASE_URL}/users`,
-  disable_user_by_id: (userId) => `${API_BASE_URL}/users/${userId}/disable`,
-  approve_user_by_id: (userId) => `${API_BASE_URL}/users/${userId}/approve`,
-
   //profile controller
   profile_user_by_id: (userId) => `${API_BASE_URL}/profiles/${userId}`,
   /**
@@ -165,7 +94,7 @@ const apiService = {
       userID: data.userID,
       username: data.username,
       email: data.email,
-      role: data.role,
+      roles: [data.role && data.role.toUpperCase()], // chuyển role thành mảng, ví dụ ["ADMIN"]
     };
 
     localStorage.setItem("userData", JSON.stringify(userData));
@@ -313,6 +242,31 @@ const apiService = {
     return Date.now() / 1000 > payload.exp;
   },
 
+  // Social login (Google OAuth || Facebook OAuth)
+  socialLogin: async function ({ provider, accessToken }) {
+    const res = await fetch(`${API_BASE_URL}/auth/social`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "*/*",
+      },
+      body: JSON.stringify({ provider, accessToken }),
+    });
+    if (!res.ok) throw new Error("Social login failed");
+    return await res.json();
+  },
+
+  // apiService.js
+  googleCodeLogin: async (code) => {
+    const res = await fetch(`${API_BASE_URL}/auth/google/code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (!res.ok) throw new Error("Google login failed");
+    return await res.json();
+  },
+
   ///////////////////////////////////////////////////////////////////////////////
   // API TẠO BÀI ĐĂNG SẢN PHẨM
   // Lấy danh sách brand (public, không cần token)
@@ -447,6 +401,107 @@ const apiService = {
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error("Không tạo được thanh toán");
+    return await res.json();
+  },
+  ////////////////////////////////////////////////////////////////////////////////
+  // API CHO ADMIN VÀ MODERATOR
+  // Lấy danh sách tất cả người dùng (chỉ dành cho Admin)
+  getAllUsers: async function () {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/users`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể tải danh sách người dùng");
+    return await res.json();
+  },
+
+  // Khóa hoặc mở khóa người dùng (chỉ dành cho Admin)
+  disableUser: async function (userId) {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/users/${userId}/disable`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể khóa người dùng");
+    return await res.json();
+  },
+
+  enableUser: async function (userId) {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/users/${userId}/enable`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể mở khóa người dùng");
+    return await res.json();
+  },
+
+  // Lấy danh sach tất cả bài đăng (chỉ dành cho Moderator và Admin)
+  getAllListings: async function () {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/listings`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể tải danh sách bài đăng");
+    return await res.json();
+  },
+
+  // Lấy danh sách tất cả bài đăng status PENDING (chỉ dành cho Moderator và Admin)
+  getListingsPending: async function () {
+    const token = this.getAuthToken();
+    const url = new URL(`${API_BASE_URL}/listings`);
+    url.searchParams.append("status", "PENDING");
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể tải danh sách bài đăng");
+    return await res.json();
+  },
+
+  // Phê duyệt bài đăng (chỉ dành cho Moderator và Admin)
+  approveListing: async function (listingId) {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/listings/${listingId}/approve`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể phê duyệt bài đăng");
+    return await res.json();
+  },
+
+  // Từ chối bài đăng (chỉ dành cho Moderator và Admin)
+  rejectListing: async function (id, reason) {
+    const res = await fetch(
+      `${API_BASE_URL}/listings/${id}/reject?reason=${encodeURIComponent(
+        reason
+      )}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.getAuthToken()}`,
+          Accept: "*/*",
+        },
+      }
+    );
+    if (!res.ok) throw new Error("Từ chối bài đăng thất bại");
     return await res.json();
   },
 };

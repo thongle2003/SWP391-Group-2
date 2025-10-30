@@ -210,9 +210,6 @@ function BuyCars() {
                     />
                     <span>
                       Khác{" "}
-                      <span style={{ color: "#999", fontSize: "12px" }}>
-                        (không thuộc top 5)
-                      </span>
                     </span>
                   </label>
                 </div>
@@ -260,9 +257,6 @@ function BuyCars() {
                     />
                     <span>
                       Khác{" "}
-                      <span style={{ color: "#999", fontSize: "12px" }}>
-                        (không thuộc top 5)
-                      </span>
                     </span>
                   </label>
                 </div>
@@ -375,7 +369,7 @@ function BuyCars() {
                               className="contact-btn"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              Liên hệ
+                              Đặt mua
                             </button>
                           </div>
                         </div>

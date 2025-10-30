@@ -529,6 +529,12 @@ function SellCars() {
           </div>
         </div>
       </div>
+      {submitting && (
+        <div className="submit-overlay">
+          <div className="submit-spinner"></div>
+          <div>Đang gửi bài đăng...</div>
+        </div>
+      )}
     </>
   );
 }
