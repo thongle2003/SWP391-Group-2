@@ -55,13 +55,15 @@ public class ContractWebhookController {
             String signedFileUrl = extractCombinedUrl(json);
             Date signedAt = extractCompletedAt(json);
             String email = extractEmail(json);
+            String role = extractRole(json);
+            String eventType = extractEventType(json);
 
             if (envelopeId != null) {
                 boolean updatedById = false;
                 try {
-                    contractService.handleWebhookUpdate(envelopeId, status, signedFileUrl, signedAt);
+                    contractService.handleWebhookUpdate(envelopeId, status, signedFileUrl, signedAt, email, role, eventType);
                     updatedById = true;
-                    log.info("Webhook processed for envelope/submission {} status={} signedUrl={} signedAt={}", envelopeId, status, signedFileUrl, signedAt);
+                    log.info("Webhook processed for envelope/submission {} status={} role={} email={} signedUrl={} signedAt={}", envelopeId, status, role, email, signedFileUrl, signedAt);
                 } catch (Exception ex) {
                     log.info("Webhook id {} not found, will try fallback by email. err={}", envelopeId, ex.getMessage());
                 }
@@ -79,7 +81,7 @@ public class ContractWebhookController {
                 if (email != null && !email.isBlank()) {
                     try {
                         // no id present; still update by email
-                        contractService.handleWebhookFallbackByEmail(email, status, signedFileUrl, signedAt);
+                        contractService.handleWebhookFallbackByEmail(email, status, signedFileUrl, eventType, signedAt);
                         log.info("Webhook fallback by email processed for {} status={} (no id)", email, status);
                     } catch (Exception ignored) {
                         log.info("Webhook received but no envelope/submission id found. event_type={}, keys={}", json.get("event_type"), json.keySet());
@@ -112,7 +114,31 @@ public class ContractWebhookController {
         if (v == null) v = json.get("signer_email");
         return v instanceof String s && !s.isBlank() ? s : null;
     }
-    @SuppressWarnings("unchecked")
+
+    private static String extractRole(Map<String, Object> json) {
+        Object data = json.get("data");
+        if (data instanceof Map<?,?> m) {
+            Object v = m.get("role");
+            if (v instanceof String s && !s.isBlank()) return s;
+            v = m.get("submitter_role");
+            if (v instanceof String s && !s.isBlank()) return s;
+            v = m.get("signer_role");
+            if (v instanceof String s && !s.isBlank()) return s;
+        }
+        Object v = json.get("role");
+        if (v == null) v = json.get("submitter_role");
+        if (v == null) v = json.get("signer_role");
+        return v instanceof String s && !s.isBlank() ? s : null;
+    }
+
+    private static String extractEventType(Map<String, Object> json) {
+        Object v = json.get("event_type");
+        if (v instanceof String s && !s.isBlank()) {
+            return s;
+        }
+        Object type = json.get("type");
+        return type instanceof String s && !s.isBlank() ? s : null;
+    }
     private Map<String, Object> parseBodyFlexible(HttpServletRequest request, String body) throws Exception {
         try {
             if (body != null && !body.isBlank()) {
@@ -188,11 +214,10 @@ public class ContractWebhookController {
         return url instanceof String s ? s : null;
     }
 
-    @SuppressWarnings("unchecked")
     private static Date extractCompletedAt(Map<String, Object> json) {
         Object data = json.get("data");
         Object v = null;
-        if (data instanceof Map<?,?> m) v = ((Map<String, Object>) m).get("completed_at");
+        if (data instanceof Map<?,?> m) v = m.get("completed_at");
         if (v == null) v = json.get("completed_at");
         if (v instanceof String s) {
             try {
