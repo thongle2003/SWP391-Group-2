@@ -126,8 +126,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/auth/social").permitAll()
+                .requestMatchers(SecurityPaths.publicEndpoints()).permitAll()
+                .requestMatchers(SecurityPaths.authEndpoints()).permitAll()
+                .requestMatchers(SecurityPaths.memberEndpoints()).hasAnyRole("MEMBER","MODERATOR","ADMIN")
+                .requestMatchers(SecurityPaths.moderatorEndpoints()).hasAnyRole("MODERATOR","ADMIN")
+                .requestMatchers(SecurityPaths.adminEndpoints()).hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

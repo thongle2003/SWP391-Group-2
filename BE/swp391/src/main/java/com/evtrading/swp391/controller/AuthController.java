@@ -108,9 +108,10 @@ public class AuthController {
 
             // Tạo JWT bằng JwtProvider
             String jwt = jwtProvider.createToken(
-                user.getUserID(),
-                user.getEmail(),
-                user.getRole().getRoleName()
+                    user.getUserID(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().getRoleName()
             );
 
             AuthResponseDTO response = new AuthResponseDTO(
@@ -237,9 +238,10 @@ public ResponseEntity<?> googleServerSideLogin(@RequestBody GoogleCodeDTO dto) {
 
         // 4. Tạo JWT như cũ
         String jwt = jwtProvider.createToken(
-            user.getUserID(),
-            user.getEmail(),
-            user.getRole().getRoleName()
+                user.getUserID(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().getRoleName()
         );
 
         AuthResponseDTO response = new AuthResponseDTO(

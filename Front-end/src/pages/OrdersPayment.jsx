@@ -57,10 +57,15 @@ Một số nguyên nhân có thể:
       setLoading(true);
       setError("");
       try {
-        const data = await apiService.getTransactions(navigate);
+        const data = await apiService.getTransactions();
         setTransactions(data);
       } catch (err) {
-        setError(err.message);
+        if (err.status === 401) {
+          apiService.clearAuthToken();
+          navigate("/login");
+          return;
+        }
+        setError(err.message || "Không thể tải giao dịch");
       } finally {
         setLoading(false);
       }

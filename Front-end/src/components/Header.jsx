@@ -20,15 +20,13 @@ function Header() {
         '/orders-payment',
         '/sell'
       ]
-      if ((!token || apiService.isTokenExpired()) && protectedPaths.includes(window.location.pathname)) {
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('user')
-        localStorage.removeItem('userData')
-        localStorage.removeItem('isLoggedIn')
-        localStorage.removeItem('userID')
-        setUser(null)
-        window.location.href = '/login'
-        return
+      if (!token || apiService.isTokenExpired()) {
+        apiService.clearAuthToken();
+        setUser(null);
+        if (protectedPaths.includes(window.location.pathname)) {
+          navigate("/login", { replace: true });
+        }
+        return;
       }
       if (storedUser) {
         try {

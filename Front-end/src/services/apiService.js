@@ -318,7 +318,7 @@ const apiService = {
 
   // API GIAO DỊCH VÀ THANH TOÁN
   // Lấy danh sách giao dịch của user hiện tại
-  getTransactions: async function (navigate) {
+  getTransactions: async function () {
     const token = this.getAuthToken();
     const res = await fetch(`${API_BASE_URL}/transactions`, {
       headers: {
@@ -326,12 +326,23 @@ const apiService = {
         Accept: "*/*",
       },
     });
-    if (res.status === 401 || res.status === 403) {
-      // Token hết hạn hoặc không hợp lệ, chuyển về login
-      if (navigate) navigate("/login");
-      throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+
+    if (res.status === 204) {
+      return [];
     }
-    if (!res.ok) throw new Error("Không thể tải giao dịch");
+
+    if (!res.ok) {
+      let message = "Không thể tải giao dịch";
+      if (res.status === 401) {
+        message = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+      } else if (res.status === 403) {
+        message = "Bạn không có quyền truy cập giao dịch này.";
+      }
+      const error = new Error(message);
+      error.status = res.status;
+      throw error;
+    }
+
     return await res.json();
   },
 

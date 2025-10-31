@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus; // Add this import for HttpStatus
 import org.springframework.http.ResponseEntity;
 
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.*;
 
 @Slf4j
@@ -46,26 +47,24 @@ public class SocialAuthService {
             base = "user_" + UUID.randomUUID().toString().substring(0, 6);
         }
 
-        // Xử lý Unicode name đúng cách
-        String candidate = base.trim()
-                .replaceAll("[\\p{Space}]+", "_") // thay space bằng underscore
-                .replaceAll("[^\\p{L}\\p{N}_-]", "") // giữ chữ cái Unicode, số và _ -
+        String normalized = Normalizer.normalize(base, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", ""); // bỏ dấu
+
+        String candidate = normalized.trim()
+                .replaceAll("[\\p{Space}]+", "_")
+                .replaceAll("[^a-zA-Z0-9_-]", "")
                 .toLowerCase(Locale.ROOT);
 
-        // Đảm bảo độ dài tối thiểu
         if (candidate.length() < 3) {
             candidate = "user_" + UUID.randomUUID().toString().substring(0, 6);
         }
 
-        // Đảm bảo không trùng
         String unique = candidate;
         int i = 1;
         while (userRepo.findByUsername(unique).isPresent()) {
             unique = candidate + "_" + i++;
         }
-        
-        // Convert về UTF-8 để đảm bảo encoding
-        return new String(unique.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        return unique;
     }
 
     @Transactional
@@ -156,15 +155,15 @@ public class SocialAuthService {
             // Khi tạo JWT token, đảm bảo username được encode đúng
             String jwt = jwtProvider.createToken(
                 user.getUserID(),
-                new String(user.getEmail().getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8),
+                user.getUsername(),
+                user.getEmail(),
                 user.getRole().getRoleName()
             );
 
-            // Khi tạo response
             return new AuthResponseDTO(
                 jwt,
                 user.getUserID(),
-                new String(user.getUsername().getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8),
+                user.getUsername(),
                 user.getEmail(),
                 user.getRole().getRoleName()
             );
