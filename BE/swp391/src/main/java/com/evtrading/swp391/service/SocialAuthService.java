@@ -1,6 +1,7 @@
 package com.evtrading.swp391.service;
 
 import com.evtrading.swp391.dto.AuthResponseDTO;
+import com.evtrading.swp391.dto.GoogleTokenResponse;
 import com.evtrading.swp391.dto.SocialLoginRequestDTO;
 import com.evtrading.swp391.entity.Role;
 import com.evtrading.swp391.entity.User;
@@ -10,12 +11,21 @@ import com.evtrading.swp391.security.FacebookAuthVerifier;
 import com.evtrading.swp391.security.GoogleAuthVerifier;
 import com.evtrading.swp391.security.JwtProvider;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import com.google.api.client.util.Value;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus; // Add this import for HttpStatus
+import org.springframework.http.ResponseEntity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -168,4 +178,58 @@ public class SocialAuthService {
             );
         }
     }
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+private String clientId;
+
+@Value("${spring.security.oauth2.client.registration.google.client-secret}")
+private String clientSecret;
+
+public GoogleTokenResponse exchangeCodeForTokens(String code) {
+    RestTemplate rest = new RestTemplate();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+    MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+    map.add("code", code);
+    map.add("client_id", clientId);
+    map.add("client_secret", clientSecret);
+    map.add("redirect_uri", "http://localhost:8080/api/auth/google/callback");
+    map.add("grant_type", "authorization_code");
+
+    HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+    ResponseEntity<GoogleTokenResponse> response = rest.postForEntity(
+        "https://oauth2.googleapis.com/token",
+        request,
+        GoogleTokenResponse.class
+    );
+
+    return response.getBody();
+}
+
+public GoogleAuthVerifier getGoogleVerifier() {
+    return googleVerifier;
+}
+
+public User processGoogleUser(GoogleIdToken.Payload payload) {
+    String email = payload.getEmail();
+    String googleId = payload.getSubject();
+    String name = (String) payload.get("name");
+
+    User user = userRepo.findByEmail(email).orElse(null);
+    if (user == null) {
+        user = new User();
+        user.setEmail(email);
+        user.setUsername(generateUniqueUsername(name));
+        user.setRole(roleRepo.findByRoleName("MEMBER"));
+        user.setStatus("Active");
+        user.setPassword("");
+        user = userRepo.save(user);
+    }
+    // Nếu muốn lưu SocialAccount, thêm logic ở đây
+
+    return user;
+}
 }

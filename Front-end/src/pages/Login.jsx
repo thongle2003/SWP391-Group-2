@@ -36,6 +36,28 @@ function Login() {
     })(document, "script", "facebook-jssdk");
   }, []);
 
+  const processAuthSuccess = (response) => {
+    if (response && response.token) {
+      window.dispatchEvent(new Event("storage"));
+      setTimeout(() => {
+        const role =
+          response.role?.toUpperCase?.() ||
+          response.roleName?.toUpperCase?.() ||
+          (response.user && Array.isArray(response.user.roles)
+            ? response.user.roles[0]
+            : "");
+
+        if (role === "ADMIN" || role === "MODERATOR") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }, 100);
+    } else {
+      setError("Đăng nhập thất bại");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -54,33 +76,7 @@ function Login() {
         username,
         password,
       });
-
-      // Kiểm tra response có token
-      if (response && response.token) {
-        // Đăng nhập thành công
-        console.log("Login successful, redirecting to home...");
-
-        // Trigger custom event để Header reload user data
-        window.dispatchEvent(new Event("storage"));
-
-        // Đợi một chút để localStorage được cập nhật
-        setTimeout(() => {
-          // Ưu tiên lấy role từ response.role
-          const role =
-            response.role?.toUpperCase?.() ||
-            (response.user && Array.isArray(response.user.roles)
-              ? response.user.roles[0]
-              : "");
-
-          if (role === "ADMIN" || role === "MODERATOR") {
-            navigate("/admin");
-          } else {
-            navigate("/");
-          }
-        }, 100);
-      } else {
-        setError("Đăng nhập thất bại");
-      }
+      processAuthSuccess(response);
     } catch (err) {
       console.error("Login error:", err);
       setError(err.message || "Tên đăng nhập hoặc mật khẩu không đúng");
@@ -99,11 +95,9 @@ function Login() {
               provider: "FACEBOOK",
               accessToken,
             })
-            .then((res) => {
-              // Xử lý đăng nhập thành công
-            })
+            .then(processAuthSuccess)
             .catch((err) => {
-              // Xử lý lỗi
+              setError(err.message || "Đăng nhập Facebook thất bại");
             });
         } else {
           alert("Đăng nhập Facebook thất bại");
@@ -247,6 +241,7 @@ function Login() {
                 </div>
 
                 <div className="social-login">
+                  {/* Google login */}
                   <GoogleLogin
                     onSuccess={(credentialResponse) => {
                       const accessToken = credentialResponse.credential;
@@ -255,17 +250,16 @@ function Login() {
                           provider: "GOOGLE",
                           accessToken,
                         })
-                        .then((res) => {
-                          // Xử lý đăng nhập thành công
-                        })
+                        .then(processAuthSuccess)
                         .catch((err) => {
-                          // Xử lý lỗi
+                          setError(err.message || "Đăng nhập Google thất bại");
                         });
                     }}
                     onError={() => {
-                      alert("Đăng nhập Google thất bại");
+                      setError("Đăng nhập Google thất bại");
                     }}
                   />
+                  {/* Facebook login */}
                   <button
                     className="btn social-button facebook"
                     onClick={handleFacebookLogin}

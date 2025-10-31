@@ -19,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +33,7 @@ import java.math.BigDecimal;
 @RequestMapping("/api/listings")
 @Tag(name = "Listings", description = "API để quản lý bài đăng sản phẩm")
 public class ListingController {
-    
+
     @Autowired
     private ListingService listingService;
 
@@ -52,7 +53,8 @@ public class ListingController {
         ListingRequestDTO listingRequest = mapper.readValue(listingJson, ListingRequestDTO.class);
 
         // Tiếp tục xử lý như bình thường
-        ListingResponseDTO createdListing = listingService.createListing(listingRequest, images, authentication.getName());
+        ListingResponseDTO createdListing = listingService.createListing(listingRequest, images,
+                authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdListing);
     }
 
@@ -69,19 +71,20 @@ public class ListingController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             Authentication authentication) {
-        
+
         Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        
+
         boolean isModerator = false;
-        
+
         // Kiểm tra role của người dùng
         if (authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR") || a.getAuthority().equals("ROLE_ADMIN"))) {
             isModerator = true;
         }
-        
-        Page<ListingResponseDTO> listings = listingService.getListings(status, userId, categoryId, brandId, pageable, isModerator);
+
+        Page<ListingResponseDTO> listings = listingService.getListings(status, userId, categoryId, brandId, pageable,
+                isModerator);
         return ResponseEntity.ok(listings);
     }
 
@@ -103,7 +106,7 @@ public class ListingController {
             @PathVariable Integer id,
             @RequestBody ListingRequestDTO listingRequest,
             Authentication authentication) {
-        
+
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -125,7 +128,7 @@ public class ListingController {
     public ResponseEntity<Void> deleteListing(
             @PathVariable Integer id,
             Authentication authentication) {
-        
+
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -173,22 +176,6 @@ public class ListingController {
         }
     }
 
-    @Operation(summary = "Lấy danh sách bài đăng chờ phê duyệt", description = "Dành cho moderator để xem các bài đăng đang chờ phê duyệt")
-    @SecurityRequirement(name = "bearerAuth")
-    @GetMapping("/pending")
-    @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<Page<ListingResponseDTO>> getPendingListings(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
-        
-        Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        
-        Page<ListingResponseDTO> pendingListings = listingService.getPendingListings(pageable);
-        return ResponseEntity.ok(pendingListings);
-    }
 
     @SecurityRequirements
     @Operation(summary = "Tìm kiếm bài đăng", description = "Tìm kiếm theo từ khóa, category, brand, khoảng giá, năm sản xuất...")
@@ -207,8 +194,7 @@ public class ListingController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
         Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 

@@ -317,46 +317,18 @@ function ProductManagement() {
 
         {/* Modal zoom ảnh */}
         {zoomImageUrl && (
-          <div className="modal-overlay" onClick={() => setZoomImageUrl(null)}>
+          <div className="modal-overlay zoom-image" onClick={() => setZoomImageUrl(null)}>
             <div
-              className="modal-content"
-              style={{
-                background: "transparent",
-                boxShadow: "none",
-                padding: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minWidth: 0,
-                minHeight: 0,
-              }}
+              className="modal-content zoom-image"
               onClick={e => e.stopPropagation()}
             >
               <img
                 src={zoomImageUrl}
                 alt="Zoom ảnh xe"
-                style={{
-                  maxWidth: "90vw",
-                  maxHeight: "90vh",
-                  borderRadius: 10,
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
-                  background: "#fff"
-                }}
+                className="zoom-image-img"
               />
               <button
-                style={{
-                  position: "absolute",
-                  top: 24,
-                  right: 24,
-                  background: "#fff",
-                  border: "none",
-                  borderRadius: "50%",
-                  width: 36,
-                  height: 36,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  cursor: "pointer",
-                  fontSize: 22,
-                }}
+                className="zoom-image-close"
                 onClick={() => setZoomImageUrl(null)}
                 title="Đóng"
               >

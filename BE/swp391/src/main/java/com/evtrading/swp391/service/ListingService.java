@@ -326,19 +326,6 @@ public class ListingService {
         return convertToListingResponseDTO(savedListing, images);
     }
 
-    /**
-     * Lấy danh sách các bài đăng đang chờ phê duyệt (PENDING)
-     * Chỉ dành cho moderator
-     */
-    public Page<ListingResponseDTO> getPendingListings(Pageable pageable) {
-        Page<Listing> pendingListingsPage = listingRepository.findByStatus("PENDING", pageable);
-        
-        return pendingListingsPage.map(listing -> {
-            List<ListingImage> images = listingImageRepository.findByListingListingID(listing.getListingID());
-            return convertToListingResponseDTO(listing, images);
-        });
-    }
-
     // Các phương thức helper bên dưới
 
     private Vehicle createVehicleFromDTO(VehicleDTO dto, Category category, Brand brand) {

@@ -19,7 +19,6 @@ public final class SecurityPaths {
             "/api/vnpay/callback",
             "/api/listings/search",    // Cho phép tìm kiếm bài đăng public
             "/api/listings/{id}",
-            "/api/listings/*",
             "/api/brands",
             "/api/categories"
             

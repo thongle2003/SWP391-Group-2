@@ -77,58 +77,7 @@ const apiService = {
     }
 
     const data = await response.json();
-
-    // Debug: Log response từ backend
-    console.log("✅ Login API Response:", data);
-
-    // Lưu token vào localStorage
-    if (data.token) {
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("tokenType", data.tokenType || "Bearer ");
-      console.log("Token saved:", data.token);
-    }
-
-    // Lưu user data (data ở root level từ API)
-    const userData = {
-      id: data.userID,
-      userID: data.userID,
-      username: data.username,
-      email: data.email,
-      roles: [data.role && data.role.toUpperCase()], // chuyển role thành mảng, ví dụ ["ADMIN"]
-    };
-
-    localStorage.setItem("userData", JSON.stringify(userData));
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userID", data.userID);
-    localStorage.setItem("username", data.username);
-
-    // ===== LẤY ATTRIBUTE ROLE TỪ API =====
-    const roleAttribute = data.role; // getAttribute từ response
-
-    // Chuyển đổi role string sang role ID
-    let roleId = 3; // Default: Member
-    if (roleAttribute === "Admin") {
-      roleId = 1;
-    } else if (roleAttribute === "Moderator") {
-      roleId = 2;
-    } else if (roleAttribute === "Member") {
-      roleId = 3;
-    }
-
-    // Lưu role vào localStorage
-    localStorage.setItem("role", roleId.toString());
-    localStorage.setItem("roleId", roleId.toString());
-    localStorage.setItem("roleName", roleAttribute);
-
-    console.log("📌 Role getAttribute:", roleAttribute, "→ ID:", roleId);
-
-    // ===== THÔNG BÁO THEO ROLE =====
-    if (roleAttribute === "Admin") {
-      alert(
-        `✅ Đã đăng nhập là ADMIN\n\nUser: ${data.username}\nEmail: ${data.email}`
-      );
-    }
+    persistAuthData(data);
 
     return data;
   },
@@ -253,7 +202,9 @@ const apiService = {
       body: JSON.stringify({ provider, accessToken }),
     });
     if (!res.ok) throw new Error("Social login failed");
-    return await res.json();
+    const data = await res.json();
+    persistAuthData(data);
+    return data;
   },
 
   // apiService.js
@@ -264,7 +215,9 @@ const apiService = {
       body: JSON.stringify({ code }),
     });
     if (!res.ok) throw new Error("Google login failed");
-    return await res.json();
+    const data = await res.json();
+    persistAuthData(data);
+    return data;
   },
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -507,3 +460,37 @@ const apiService = {
 };
 
 export default apiService;
+
+const persistAuthData = (data) => {
+  if (!data || !data.token) return;
+
+  localStorage.setItem("authToken", data.token);
+  localStorage.setItem("tokenType", data.tokenType || "Bearer ");
+
+  const userData = {
+    id: data.userID,
+    userID: data.userID,
+    username: data.username,
+    email: data.email,
+    roles: [data.role && data.role.toUpperCase()],
+  };
+
+  localStorage.setItem("userData", JSON.stringify(userData));
+  localStorage.setItem("user", JSON.stringify(userData));
+  localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("userID", data.userID);
+  localStorage.setItem("username", data.username);
+
+  const roleAttribute = data.role;
+  let roleId = 3;
+  if (roleAttribute === "Admin") roleId = 1;
+  else if (roleAttribute === "Moderator") roleId = 2;
+
+  localStorage.setItem("role", roleId.toString());
+  localStorage.setItem("roleId", roleId.toString());
+  localStorage.setItem("roleName", roleAttribute);
+
+  if (roleAttribute === "Admin") {
+    alert(`✅ Đã đăng nhập là ADMIN\n\nUser: ${data.username}\nEmail: ${data.email}`);
+  }
+};

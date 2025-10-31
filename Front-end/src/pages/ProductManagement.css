@@ -107,6 +107,53 @@
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
 }
 
+/* Modal zoom ảnh */
+.modal-overlay.zoom-image {
+  background: rgba(0,0,0,0.5);
+}
+
+.modal-content.zoom-image {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+.zoom-image-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  background: #fff;
+}
+
+.zoom-image-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  font-size: 24px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.zoom-image-close:hover {
+  background: #eee;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .admin-dashboard-section {
