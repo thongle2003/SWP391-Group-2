@@ -11,7 +11,16 @@ public class ContractDTO {
     private String signedFileUrl;
     private Date signedAt;
     private Date updateAt;
-    private String signingUrl; // link to invite signer
+    private String sellerEmail;
+    private String sellerName;
+    private String sellerStatus;
+    private String sellerSigningUrl;
+    private Date sellerSignedAt;
+    private String buyerEmail;
+    private String buyerName;
+    private String buyerStatus;
+    private String buyerSigningUrl;
+    private Date buyerSignedAt;
 
     public Integer getContractId() { return contractId; }
     public void setContractId(Integer contractId) { this.contractId = contractId; }
@@ -29,6 +38,24 @@ public class ContractDTO {
     public void setSignedAt(Date signedAt) { this.signedAt = signedAt; }
     public Date getUpdateAt() { return updateAt; }
     public void setUpdateAt(Date updateAt) { this.updateAt = updateAt; }
-    public String getSigningUrl() { return signingUrl; }
-    public void setSigningUrl(String signingUrl) { this.signingUrl = signingUrl; }
+    public String getSellerEmail() { return sellerEmail; }
+    public void setSellerEmail(String sellerEmail) { this.sellerEmail = sellerEmail; }
+    public String getSellerName() { return sellerName; }
+    public void setSellerName(String sellerName) { this.sellerName = sellerName; }
+    public String getSellerStatus() { return sellerStatus; }
+    public void setSellerStatus(String sellerStatus) { this.sellerStatus = sellerStatus; }
+    public String getSellerSigningUrl() { return sellerSigningUrl; }
+    public void setSellerSigningUrl(String sellerSigningUrl) { this.sellerSigningUrl = sellerSigningUrl; }
+    public Date getSellerSignedAt() { return sellerSignedAt; }
+    public void setSellerSignedAt(Date sellerSignedAt) { this.sellerSignedAt = sellerSignedAt; }
+    public String getBuyerEmail() { return buyerEmail; }
+    public void setBuyerEmail(String buyerEmail) { this.buyerEmail = buyerEmail; }
+    public String getBuyerName() { return buyerName; }
+    public void setBuyerName(String buyerName) { this.buyerName = buyerName; }
+    public String getBuyerStatus() { return buyerStatus; }
+    public void setBuyerStatus(String buyerStatus) { this.buyerStatus = buyerStatus; }
+    public String getBuyerSigningUrl() { return buyerSigningUrl; }
+    public void setBuyerSigningUrl(String buyerSigningUrl) { this.buyerSigningUrl = buyerSigningUrl; }
+    public Date getBuyerSignedAt() { return buyerSignedAt; }
+    public void setBuyerSignedAt(Date buyerSignedAt) { this.buyerSignedAt = buyerSignedAt; }
 }

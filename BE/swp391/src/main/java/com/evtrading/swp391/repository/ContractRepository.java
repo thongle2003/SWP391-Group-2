@@ -11,5 +11,6 @@ public interface ContractRepository extends JpaRepository<Contract, Integer> {
     Optional<Contract> findByOrder(Order order);
     Optional<Contract> findByOrder_OrderID(Integer orderID);
     Optional<Contract> findByDocusealEnvelopeID(String docusealEnvelopeID);
-    Optional<Contract> findTopBySignerEmailOrderByUpdateAtDesc(String signerEmail);
+    Optional<Contract> findTopBySellerEmailOrderByUpdateAtDesc(String sellerEmail);
+    Optional<Contract> findTopByBuyerEmailOrderByUpdateAtDesc(String buyerEmail);
 }
