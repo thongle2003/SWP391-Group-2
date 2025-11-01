@@ -6,15 +6,6 @@ const apiService = {
   // thêm export của API_BASE_URL để các module khác có thể dùng trực tiếp
   API_BASE_URL,
   // thiết lập các phương thức api ở đây
-
-  //profile controller
-  profile_user_by_id: (userId) => `${API_BASE_URL}/profiles/${userId}`,
-  /**
-   * Cập nhật thông tin profile của người dùng (PUT).
-   * @param {number} userId - ID của người dùng cần cập nhật.
-   */
-  update_profile_by_id: (userId) => `${API_BASE_URL}/profiles/${userId}`,
-
   //api complaint controller (feedback)
   /**
    * @param {number} complaintId - ID của khiếu nại cần giải quyết.
@@ -185,10 +176,14 @@ const apiService = {
   },
 
   isTokenExpired: function () {
-    const payload = this.getTokenPayload();
-    if (!payload || !payload.exp) return true;
-    // exp là số giây, Date.now() là ms
-    return Date.now() / 1000 > payload.exp;
+    const token = this.getAuthToken();
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
   },
 
   // Social login (Google OAuth || Facebook OAuth)
@@ -207,7 +202,7 @@ const apiService = {
     return data;
   },
 
-  // apiService.js
+  // Google OAuth login with authorization code
   googleCodeLogin: async (code) => {
     const res = await fetch(`${API_BASE_URL}/auth/google/code`, {
       method: "POST",
@@ -219,6 +214,58 @@ const apiService = {
     persistAuthData(data);
     return data;
   },
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // API PROFILE NGƯỜI DÙNG
+  getProfile: async function (userId) {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/profiles/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error("Không thể tải hồ sơ người dùng");
+    return await res.json();
+  },
+
+  updateProfile: async function (userId, profileData) {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/profiles/${userId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "*/*",
+      },
+      body: JSON.stringify(profileData),
+    });
+    if (!res.ok) throw new Error("Cập nhật hồ sơ thất bại");
+    return await res.json();
+  },
+
+  getUserListings: async function () {
+    const token = this.getAuthToken();
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+    const userId = userData.userID;
+    if (!userId) throw new Error("Không tìm thấy userID");
+
+    const url = new URL(`${API_BASE_URL}/listings`);
+    url.searchParams.append("userId", userId);
+    url.searchParams.append("size", "100"); // Giới hạn 100 bài đăng
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể tải danh sách bài đăng");
+    return await res.json();
+  },
+
+  
 
   ///////////////////////////////////////////////////////////////////////////////
   // API TẠO BÀI ĐĂNG SẢN PHẨM
@@ -396,6 +443,7 @@ const apiService = {
     return await res.json();
   },
 
+  // Mở khóa người dùng (chỉ dành cho Admin)
   enableUser: async function (userId) {
     const token = this.getAuthToken();
     const res = await fetch(`${API_BASE_URL}/users/${userId}/enable`, {
@@ -468,6 +516,37 @@ const apiService = {
     if (!res.ok) throw new Error("Từ chối bài đăng thất bại");
     return await res.json();
   },
+
+  // Lấy danh sách tất cả giao dịch (chỉ dành cho Admin)
+  getAllTransactions: async function () {
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/admin/transactions`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) throw new Error("Không thể tải danh sách giao dịch");
+    return await res.json();
+  },
+
+  // Lấy lịch sử thanh toán của giao dịch (chỉ dành cho Admin)
+  getTransactionPayments: async function (transactionId) {
+    const token = this.getAuthToken();
+    const res = await fetch(
+      `${API_BASE_URL}/admin/transactions/${transactionId}/payments`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "*/*",
+        },
+      }
+    );
+    if (!res.ok) throw new Error("Không thể tải lịch sử thanh toán");
+    return await res.json();
+  },
+
+  ///////////////////////////////////////////////////////////////////////////////
 };
 
 export default apiService;
@@ -502,6 +581,8 @@ const persistAuthData = (data) => {
   localStorage.setItem("roleName", roleAttribute);
 
   if (roleAttribute === "Admin") {
-    alert(`✅ Đã đăng nhập là ADMIN\n\nUser: ${data.username}\nEmail: ${data.email}`);
+    alert(
+      `✅ Đã đăng nhập là ADMIN\n\nUser: ${data.username}\nEmail: ${data.email}`
+    );
   }
 };

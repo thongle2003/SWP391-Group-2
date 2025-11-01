@@ -368,6 +368,12 @@ public class OrderService {
             transaction.setStatus("FULLY_PAID");
             order.setStatus("COMPLETED");
             orderRepository.save(order);
+
+            Listing listing = order.getListing();
+            if (listing != null) {
+                listing.setStatus("SOLD");
+                listingRepository.save(listing);
+            }
         } else {
             transaction.setStatus("PARTIALLY_PAID");
         }
@@ -513,6 +519,60 @@ public class OrderService {
                     dto.setPaidAmount(t.getPaidAmount());
                     return dto;
                 }).collect(Collectors.toList());
+    }
+
+    public List<TransactionDTO> getAllTransactionsForAdmin() {
+        List<Transaction> transactions = transactionRepository.findAll();
+        return transactions.stream().map(t -> {
+            TransactionDTO dto = new TransactionDTO();
+            dto.setTransactionId(t.getTransactionID());
+            dto.setCreatedAt(t.getCreatedAt());
+            dto.setExpiredAt(t.getDueTime());
+            dto.setStatus(t.getStatus());
+            dto.setTotalAmount(t.getTotalAmount());
+            dto.setOrderId(t.getOrder().getOrderID());
+            dto.setPaidAmount(t.getPaidAmount());
+
+            // Thêm thông tin người mua, người bán, tiêu đề bài đăng
+            Order order = t.getOrder();
+            if (order != null) {
+                User buyer = order.getBuyer();
+                if (buyer != null) {
+                    dto.setBuyerUsername(buyer.getUsername());
+                    dto.setBuyerEmail(buyer.getEmail());
+                }
+                Listing listing = order.getListing();
+                if (listing != null) {
+                    User seller = listing.getUser();
+                    if (seller != null) {
+                        dto.setSellerUsername(seller.getUsername());
+                        dto.setSellerEmail(seller.getEmail());
+                    }
+                    dto.setListingTitle(listing.getTitle());
+                }
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    public List<PaymentResponseDTO> getPaymentHistoryForAdmin(Integer transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        List<Payment> payments = paymentRepository.findByTransactionOrderByPaidAtDesc(transaction);
+
+        return payments.stream().map(payment -> {
+            PaymentResponseDTO dto = new PaymentResponseDTO();
+            dto.setPaymentId(payment.getPaymentID());
+            dto.setTransactionId(payment.getTransaction().getTransactionID());
+            dto.setOrderId(payment.getTransaction().getOrder().getOrderID());
+            dto.setAmount(payment.getAmount());
+            dto.setMethod(payment.getMethod());
+            dto.setProvider(payment.getProvider());
+            dto.setStatus(payment.getStatus());
+            dto.setPaidAt(payment.getPaidAt());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
 }

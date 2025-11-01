@@ -151,6 +151,12 @@ function Header() {
                     <div className="dropdown-item" onClick={() => { navigate('/orders-payment'); setShowUserMenu(false); }}>
                       <span>💳</span> Thanh toán đơn hàng
                     </div>
+                    {/* Thêm nút chuyển qua admin nếu là admin hoặc moderator */}
+                    {(user?.roles?.includes("ADMIN") || user?.roles?.includes("MODERATOR")) && (
+                      <div className="dropdown-item" onClick={() => { navigate('/admin'); setShowUserMenu(false); }}>
+                        <span>🛠️</span> Admin Dashboard
+                      </div>
+                    )}
                     <div className="dropdown-divider"></div>
                     <div className="dropdown-item" onClick={handleLogout}>
                       <span>🚪</span> Đăng Xuất

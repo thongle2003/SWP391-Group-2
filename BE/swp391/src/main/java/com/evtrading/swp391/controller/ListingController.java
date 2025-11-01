@@ -58,6 +58,38 @@ public class ListingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdListing);
     }
 
+    @Operation(summary = "Cập nhật bài đăng kèm ảnh", description = "Chỉ bài đăng bị flagged hoặc bị từ chối mới được cập nhật")
+    @SecurityRequirement(name = "bearerAuth")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ListingResponseDTO> updateListing(
+            @PathVariable Integer id,
+            @RequestPart(value = "listing", required = true) String listingJson,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            Authentication authentication) throws IOException {
+
+        System.out.println(">>> [updateListing] Authenticated user: " + (authentication != null ? authentication.getName() : "null"));
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        ListingRequestDTO listingRequest = mapper.readValue(listingJson, ListingRequestDTO.class);
+
+        try {
+            ListingResponseDTO updatedListing = listingService.updateListing(id, listingRequest, images, authentication.getName());
+            return ResponseEntity.ok(updatedListing);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("permission")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            if (e.getMessage().contains("flagged") || e.getMessage().contains("rejected")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
     // Sửa phương thức getListings để rõ ràng hơn trong việc lọc bài đăng
     @Operation(summary = "Lấy danh sách bài đăng", description = "Lấy danh sách bài đăng theo các tiêu chí")
     @GetMapping
@@ -100,51 +132,6 @@ public class ListingController {
         }
     }
 
-    @Operation(summary = "Cập nhật bài đăng", description = "Cập nhật thông tin của một bài đăng")
-    @PutMapping("/{id}")
-    public ResponseEntity<ListingResponseDTO> updateListing(
-            @PathVariable Integer id,
-            @RequestBody ListingRequestDTO listingRequest,
-            Authentication authentication) {
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        try {
-            String username = authentication.getName();
-            ListingResponseDTO updatedListing = listingService.updateListing(id, listingRequest, username);
-            return ResponseEntity.ok(updatedListing);
-        } catch (Exception e) {
-            if (e.getMessage().contains("permission")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
-    @Operation(summary = "Xóa bài đăng", description = "Xóa một bài đăng theo ID")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteListing(
-            @PathVariable Integer id,
-            Authentication authentication) {
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        try {
-            String username = authentication.getName();
-            listingService.deleteListing(id, username);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            if (e.getMessage().contains("permission")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
     // Thêm API endpoint mới cho approve/reject
     @Operation(summary = "Phê duyệt bài đăng", description = "Moderator phê duyệt bài đăng")
     @SecurityRequirement(name = "bearerAuth")
@@ -175,7 +162,6 @@ public class ListingController {
                     .body(null);
         }
     }
-
 
     @SecurityRequirements
     @Operation(summary = "Tìm kiếm bài đăng", description = "Tìm kiếm theo từ khóa, category, brand, khoảng giá, năm sản xuất...")

@@ -19,14 +19,15 @@ public final class SecurityPaths {
         "/api/vnpay/ipn",
         "/api/vnpay/callback",
         "/api/listings/search",
-        "/api/listings/{id}",
         "/api/brands",
         "/api/categories"
     };
 
     private static final String[] MEMBER_ENDPOINTS = new String[] {
         "/api/orders/**",
-        "/api/transactions/**"
+        "/api/transactions/**",
+        "/api/listings/**"
+
     };
 
     private static final String[] MODERATOR_ENDPOINTS = new String[] {

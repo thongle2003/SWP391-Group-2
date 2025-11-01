@@ -79,7 +79,7 @@ function Login() {
       processAuthSuccess(response);
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.message || "Tên đăng nhập hoặc mật khẩu không đúng");
+      setError("Tên đăng nhập hoặc mật khẩu không đúng");
     } finally {
       setLoading(false);
     }

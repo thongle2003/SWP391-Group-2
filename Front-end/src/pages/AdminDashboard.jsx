@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 import UserManagement from "./UserManagement";
 import ProductManagement from "./ProductManagement";
+import TransactionManagement from "./TransactionManagement";
 import "./AdminDashboard.css";
 
 function AdminDashboard() {
@@ -14,6 +15,7 @@ function AdminDashboard() {
         <h1 className="admin-dashboard-title">Admin Dashboard</h1>
         {activeTab === "users" && <UserManagement />}
         {activeTab === "posts" && <ProductManagement />}
+        {activeTab === "orders" && <TransactionManagement />}
         {/* Nếu muốn giữ trang tổng quan */}
         {activeTab === "overview" && (
           <>

@@ -5,6 +5,7 @@ import com.evtrading.swp391.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -102,35 +103,28 @@ public class SecurityConfig {
     }
 
     /**
-     * Cấu hình bảo mật chính cho ứng dụng
-     * Định nghĩa các quy tắc truy cập endpoints, filter chain, xác thực...
+     * Cấu hình bảo mật chính cho toàn bộ ứng dụng.
+     * Gộp các quy tắc public và protected vào một nơi duy nhất.
      */
-    // PUBLIC ENDPOINTS: KHÔNG CẦN JWT
     @Bean
-    public SecurityFilterChain publicFilterChain(HttpSecurity http) throws Exception {
-        http
-            .securityMatcher(request -> SecurityPaths.isPublicPath(request.getServletPath()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(Customizer.withDefaults())
-            .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
-            );
-        return http.build();
-    }
-
-    // PROTECTED ENDPOINTS: CẦN JWT
-    @Bean
-    public SecurityFilterChain protectedFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(SecurityPaths.publicEndpoints()).permitAll()
+                // --- QUY TẮC PUBLIC ---
                 .requestMatchers(SecurityPaths.authEndpoints()).permitAll()
-                .requestMatchers(SecurityPaths.memberEndpoints()).hasAnyRole("MEMBER","MODERATOR","ADMIN")
-                .requestMatchers(SecurityPaths.moderatorEndpoints()).hasAnyRole("MODERATOR","ADMIN")
+                .requestMatchers(SecurityPaths.publicEndpoints()).permitAll()
+                // Cho phép GET chi tiết bài đăng mà không cần đăng nhập
+                .requestMatchers(HttpMethod.GET, "/api/listings/{id}").permitAll() 
+
+                // --- QUY TẮC PROTECTED (YÊU CẦU ĐĂNG NHẬP) ---
+                .requestMatchers(SecurityPaths.memberEndpoints()).hasAnyRole("MEMBER", "MODERATOR", "ADMIN")
+                .requestMatchers(SecurityPaths.moderatorEndpoints()).hasAnyRole("MODERATOR", "ADMIN")
                 .requestMatchers(SecurityPaths.adminEndpoints()).hasRole("ADMIN")
+                
+                // Bất kỳ request nào khác đều cần xác thực
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
